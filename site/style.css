@@ -2,13 +2,15 @@
 @font-face{font-family:"Martian Mono";src:url(fonts/martian-mono-700.woff2) format("woff2");font-weight:600 800;font-display:swap}
 @font-face{font-family:"Instrument Sans";src:url(fonts/instrument-sans-400.woff2) format("woff2");font-weight:400 500;font-display:swap}
 @font-face{font-family:"Instrument Sans";src:url(fonts/instrument-sans-600.woff2) format("woff2");font-weight:600 700;font-display:swap}
+@font-face{font-family:"IS Fallback";src:local("Arial"),local("ArialMT"),local("Arimo"),local("Liberation Sans"),local("Helvetica");size-adjust:103.7%;ascent-override:93.6%;descent-override:24.1%;line-gap-override:0%}
+@font-face{font-family:"MM Fallback";src:local("Menlo"),local("Menlo-Regular"),local("DejaVu Sans Mono"),local("Consolas"),local("Courier New");size-adjust:116.3%;ascent-override:86%;descent-override:17.2%;line-gap-override:0%}
 :root{
   --ink:#07080f;--ink2:#0b0d17;--panel:#0e1120;--rule:#1b2034;--rule2:#262c46;
   --paper:#eaedf6;--mut:#8b91aa;--dim:#7d84a0;
   --cy:#22d3ee;--vi:#a78bfa;--grad:linear-gradient(90deg,#22d3ee,#a78bfa);
   --agent:#ff6b5a;--warn:#fbbf24;--ok:#5eead4;
-  --mono:"Martian Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --sans:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Martian Mono","MM Fallback",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:"Instrument Sans","IS Fallback",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --ease:cubic-bezier(.2,.8,.2,1);
 }
 *{box-sizing:border-box}
