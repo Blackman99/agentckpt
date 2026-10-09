@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentckpt"
+version = "0.1.0"
+description = "Checkpoint a working tree while coding agents run, and restore any snapshot without touching your git branches or index."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Blackman99" }]
+keywords = [
+  "agents", "checkpoint", "snapshot", "undo", "codex", "claude-code",
+  "cursor", "gemini-cli", "opencode", "git", "backup",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Version Control",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://blackman99.github.io/agentckpt/"
+Documentation = "https://blackman99.github.io/agentckpt/docs/"
+Source = "https://github.com/Blackman99/agentckpt"
+Issues = "https://github.com/Blackman99/agentckpt/issues"
+
+[project.scripts]
+agentckpt = "agentckpt.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentckpt"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "LICENSE", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"

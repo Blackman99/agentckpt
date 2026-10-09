@@ -1,0 +1,34 @@
+name: Bug report
+description: agentckpt crashed, restored wrong files, or touched real git
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: agentckpt version
+      placeholder: "agentckpt --version"
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command you ran
+      placeholder: "agentckpt restore abc1234 --force"
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output / error
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+  - type: dropdown
+    id: git_touched
+    attributes:
+      label: Did your real git HEAD / index change unexpectedly?
+      options: ["No", "Yes", "Not sure"]

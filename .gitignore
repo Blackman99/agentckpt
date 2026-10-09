@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+_site/
+.pytest_cache/
+.ruff_cache/
+.agentckpt/
+
+# local-only: OG regeneration and GitHub social preview upload file
+og.sh
+og-social-preview.png

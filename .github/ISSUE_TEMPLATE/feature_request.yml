@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest an improvement that serves GOAL.md
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Which agent workflow breaks without this?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true

@@ -1,0 +1,57 @@
+site_name: agentckpt docs
+site_description: Checkpoint a working tree while coding agents run, and restore any snapshot without touching your git branches or index.
+site_url: https://blackman99.github.io/agentckpt/docs/
+repo_url: https://github.com/Blackman99/agentckpt
+repo_name: Blackman99/agentckpt
+edit_uri: edit/main/docs/
+copyright: MIT © 2026 Blackman99
+
+theme:
+  name: material
+  custom_dir: overrides
+  favicon: assets/logo.svg
+  logo: assets/logo.svg
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: cyan
+      toggle: {icon: material/weather-sunny, name: Light mode}
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: deep purple
+      toggle: {icon: material/weather-night, name: Dark mode}
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+    - toc.follow
+
+nav:
+  - Overview: index.md
+  - Install: install.md
+  - Usage: usage.md
+  - Configuration: configuration.md
+  - Command reference: reference.md
+  - FAQ: faq.md
+  - Home page ↗: https://blackman99.github.io/agentckpt/
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
