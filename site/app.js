@@ -33,14 +33,14 @@
     function reset() {
       ["readme", "app", "utils", "notes", "scratch"].forEach(function (f) { tag(f, "", ""); });
       ck.forEach(function (c) { c.classList.remove("in", "target"); });
-      head.classList.remove("rewind"); head.style.transition = "none"; head.style.left = "4%";
-      span.style.transition = "none"; span.style.width = "0"; span.style.opacity = "1";
+      head.classList.remove("rewind"); head.style.transition = "none"; head.style.transform = "translateX(4%)";
+      span.style.transition = "none"; span.style.transform = "scaleX(0)"; span.style.opacity = "1";
       git.classList.remove("pulse");
       cmd.innerHTML = P + 'agentckpt snap -m "before agent"'; tc.textContent = "T+00:00";
       void head.offsetWidth; head.style.transition = ""; span.style.transition = "";
     }
     function snapState() {
-      head.style.transition = "left .5s var(--ease)"; head.style.left = "14%";
+      head.style.transition = "transform .5s var(--ease)"; head.style.transform = "translateX(14%)";
       ck[0].classList.add("in");
       ["readme", "app", "utils", "notes"].forEach(function (f) { tag(f, "saved", "◆ saved"); });
       tc.textContent = "T+00:01";
@@ -48,11 +48,11 @@
     function agentState() {
       ["readme", "app", "utils", "notes"].forEach(function (f) { tag(f, "", ""); });
       cmd.innerHTML = '<span style="color:var(--agent)">● agent turn</span> <span style="color:var(--mut)">editing…</span>';
-      head.style.transition = ""; head.style.left = "74%"; span.style.width = "60%"; tc.textContent = "T+04:12";
+      head.style.transition = ""; head.style.transform = "translateX(74%)"; span.style.transform = "scaleX(1)"; tc.textContent = "T+04:12";
     }
     function restoreCmd() {
       cmd.innerHTML = P + "agentckpt restore b66469f --force"; tc.textContent = "T+04:20";
-      head.classList.add("rewind"); head.style.left = "14%"; ck[0].classList.add("target"); span.style.opacity = ".3";
+      head.classList.add("rewind"); head.style.transform = "translateX(14%)"; ck[0].classList.add("target"); span.style.opacity = ".3";
     }
     function restored() {
       tag("readme", "", "= unchanged");
@@ -62,7 +62,7 @@
     }
     function finalState() {
       reset(); ck.forEach(function (c) { c.classList.add("in"); }); ck[0].classList.add("target");
-      head.style.left = "14%"; span.style.width = "60%"; span.style.opacity = ".3";
+      head.style.transform = "translateX(14%)"; span.style.transform = "scaleX(1)"; span.style.opacity = ".3";
       cmd.innerHTML = P + "agentckpt restore b66469f --force"; tc.textContent = "T+04:20";
       restored();
     }
