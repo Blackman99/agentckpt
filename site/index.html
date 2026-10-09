@@ -15,93 +15,179 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
-<meta property="og:image:alt" content="agentckpt: snap and restore a working tree while agents run, without touching git branches">
+<meta property="og:image:alt" content="agentckpt: rewind the agent, leave git alone. A checkpoint timeline restored while your .git stays unchanged">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="agentckpt: undo for coding agents, without touching your git">
 <meta name="twitter:description" content="Checkpoint a working tree while coding agents run, and restore any snapshot without touching your git branches or index.">
 <meta name="twitter:image" content="https://blackman99.github.io/agentckpt/social-preview.png">
-<meta name="twitter:image:alt" content="agentckpt social preview">
+<meta name="twitter:image:alt" content="agentckpt: rewind the agent, leave git alone">
 <meta name="theme-color" content="#07080f">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/martian-mono-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/instrument-sans-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="nav">
-  <a class="brand" href="#"><img src="favicon.svg" alt="" width="26" height="26"> agentckpt</a>
-  <nav>
-    <a href="#why">Why</a>
+  <a class="brand" href="#top" aria-label="agentckpt home"><img src="favicon.svg" alt="" width="28" height="28"><span>agentckpt</span></a>
+  <nav aria-label="Primary">
+    <a href="#how">How it works</a>
     <a href="#install">Install</a>
     <a href="docs/">Docs</a>
     <a href="docs/blog/">Blog</a>
-    <a class="gh" href="https://github.com/Blackman99/agentckpt" aria-label="GitHub">
-      <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-      GitHub</a>
+    <a class="gh" href="https://github.com/Blackman99/agentckpt" aria-label="GitHub repository"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
   </nav>
 </header>
 
-<main>
-<section class="hero">
-  <div class="hero-text">
-    <p class="eyebrow">v0.1.0 · MIT · zero deps · git on PATH</p>
-    <h1>Agents rewrite your tree.<br><span class="hl">Undo without touching git.</span></h1>
-    <p class="lede">Snap tracked <em>and</em> untracked files into a private store under <code>.agentckpt/</code>. Restore any snapshot. Your real branches and index stay untouched.</p>
-    <p class="lede strong">Built for Codex, Claude Code, Gemini CLI, OpenCode, Cursor agents — anywhere <code>/undo</code> is missing or unreliable.</p>
+<main id="main">
+<section class="hero" id="top">
+  <div class="hero-copy">
+    <p class="eyebrow"><span class="rec" aria-hidden="true"></span>v0.1.0 · MIT · zero deps · git on PATH</p>
+    <h1>Rewind the agent.<br><span class="hl">Leave git alone.</span></h1>
+    <p class="lede">agentckpt drops checkpoints of your whole working tree, <em>untracked files included</em>, into a private store under <code>.agentckpt/</code>. When a coding agent wrecks things, put any checkpoint back. Your branches, index and history stay exactly where they were.</p>
     <div class="cta">
-      <a class="btn primary" href="#install">Get started</a>
-      <a class="btn" href="docs/">Read the docs →</a>
+      <a class="btn primary" href="#install"><span class="dia" aria-hidden="true"></span>Get started</a>
+      <a class="btn" href="docs/blog/agent-undo-without-touching-git/">Read the intro →</a>
     </div>
-    <div class="servers">Pain sources: openai/codex#9203 · V2EX 1218209 · V2EX 1220282</div>
+    <div class="oneliner">
+      <code id="one">uvx --from git+https://github.com/Blackman99/agentckpt agentckpt demo</code>
+      <button class="copy" data-copy="#one" aria-label="Copy command">copy</button>
+    </div>
+    <p class="for">For Codex, Claude Code, Gemini CLI, OpenCode, Cursor agents: anywhere <code>/undo</code> is missing or unreliable.</p>
   </div>
 
-  <div class="terminal" aria-label="agentckpt demo output">
-    <div class="term-bar"><span></span><span></span><span></span><em>agentckpt · shadow store</em><button id="replay" title="Replay">↻</button></div>
-    <pre class="term-body" id="term-body"></pre>
+  <figure class="deck" id="deck" aria-label="Animation: a snapshot is taken, an agent edits and deletes files, then one restore brings them back while git stays unchanged">
+    <div class="deck-head">
+      <span class="tc" id="tc">T+00:00</span>
+      <span class="cmd" id="cmd"><span class="p">$</span> agentckpt snap -m "before agent"</span>
+    </div>
+
+    <div class="lane lane-tree">
+      <div class="lane-label">working tree</div>
+      <ul class="files" id="files">
+        <li data-f="readme"><span class="fi">README.md</span><span class="tag"></span></li>
+        <li data-f="app"><span class="fi">src/app.py</span><span class="tag"></span></li>
+        <li data-f="utils"><span class="fi">src/utils.py</span><span class="tag"></span></li>
+        <li data-f="notes" class="untracked"><span class="fi">notes.md</span><span class="ut">untracked</span><span class="tag"></span></li>
+        <li data-f="scratch" class="ghost"><span class="fi">scratch.py</span><span class="tag"></span></li>
+      </ul>
+    </div>
+
+    <div class="lane lane-time">
+      <div class="lane-label">.agentckpt/ timeline</div>
+      <div class="track" id="track">
+        <div class="ruler" aria-hidden="true"></div>
+        <div class="agentspan" id="agentspan"></div>
+        <div class="ck ck-main" id="ck1" style="--x:14%"><i></i><b>b66469f<br><small>before agent</small></b></div>
+        <div class="ck ck-auto" id="ck2" style="--x:42%"><i></i><b>auto</b></div>
+        <div class="ck ck-auto" id="ck3" style="--x:66%"><i></i><b>auto</b></div>
+        <div class="head" id="playhead" style="--x:4%"></div>
+      </div>
+    </div>
+
+    <div class="lane lane-git">
+      <div class="lane-label">your .git</div>
+      <div class="gitrow" id="gitrow">
+        <span class="lock" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="7" width="10" height="7" rx="1.6" fill="currentColor"/></svg></span>
+        <span>HEAD → main <b>63fc0ae</b></span><span>index <b>untouched</b></span><span>stash <b>empty</b></span>
+        <span class="same" id="same">unchanged ✓</span>
+      </div>
+    </div>
+    <figcaption class="sr">Snapshot, agent damage, one-step restore. Real git HEAD and index never move.</figcaption>
+  </figure>
+</section>
+
+<section class="incidents" id="why" aria-labelledby="why-h">
+  <h2 id="why-h" class="kicker">The incident log</h2>
+  <ol class="log">
+    <li><span class="lt">/undo</span><div><b>The undo button went away.</b><p>Codex removed <code>/undo</code>. The issue asking for reliable rollback is still open.</p><a href="https://github.com/openai/codex/issues/9203">openai/codex#9203 · 522 👍</a></div></li>
+    <li><span class="lt">untracked</span><div><b>Git never saw the file the agent deleted.</b><p><code>git restore</code> only knows tracked content. New modules, notes and configs vanish without a copy.</p><a href="https://www.v2ex.com/t/1220282">v2ex.com/t/1220282</a></div></li>
+    <li><span class="lt">wip</span><div><b>Stash and WIP commits leak into history.</b><p>They go through your index, reflog and branch. Agent noise ends up in the repo you ship.</p><a href="https://www.v2ex.com/t/1218209">v2ex.com/t/1218209</a></div></li>
+  </ol>
+</section>
+
+<section class="how" id="how" aria-labelledby="how-h">
+  <header class="sec-head">
+    <p class="kicker">How it works</p>
+    <h2 id="how-h">Two repositories. One working tree.</h2>
+    <p class="sub">agentckpt runs every git command as <code>git --git-dir=.agentckpt/git --work-tree=.</code>, so snapshots live in a separate store with its own index and history. Scroll through one agent turn (or tap a step).</p>
+  </header>
+  <div class="how-grid">
+    <div class="stage" id="stage" data-step="0" aria-live="polite">
+      <div class="node n-git"><span class="nl">your .git</span><span class="nv">HEAD <b>63fc0ae</b></span><span class="nv">index <b>clean</b></span><span class="stamp">unchanged</span></div>
+      <div class="node n-tree"><span class="nl">working tree</span><span class="nv" id="tree-state">4 files</span></div>
+      <div class="node n-shadow"><span class="nl">.agentckpt/git</span><span class="nv" id="shadow-state">empty</span><div class="dias" id="dias"></div></div>
+      <svg class="wires" viewBox="0 0 400 300" preserveAspectRatio="none" aria-hidden="true">
+        <path class="w w-ignore" d="M200 105 L80 205"/>
+        <path class="w w-snap" d="M200 105 L320 205"/>
+        <path class="w w-restore" d="M320 205 L200 105"/>
+        <path class="w w-agent" d="M200 30 L200 75"/>
+      </svg>
+      <div class="agent-chip">agent</div>
+    </div>
+    <ol class="steps" id="steps">
+      <li class="step" data-step="1" tabindex="0"><span class="sn">01</span><h3>init</h3><pre><code><span class="p">$</span> agentckpt init</code></pre><p>Creates <code>.agentckpt/</code> and appends one line, <code>.agentckpt/</code>, to your <code>.gitignore</code>. That's the only file of yours it ever edits.</p></li>
+      <li class="step" data-step="2" tabindex="0"><span class="sn">02</span><h3>snap</h3><pre><code><span class="p">$</span> agentckpt snap -m "before agent"
+b66469f  3 files  before agent</code></pre><p>Stages the whole tree, tracked and untracked, honouring <code>.gitignore</code>, skipping files over 10&nbsp;MiB, and commits in the <em>shadow</em> store.</p></li>
+      <li class="step" data-step="3" tabindex="0"><span class="sn">03</span><h3>the agent runs</h3><pre><code><span class="c"># edits a.txt, deletes untracked.md,
+# creates new.py</span></code></pre><p>Optional: <code>agentckpt watch</code> polls the tree and auto-snaps whenever files change.</p></li>
+      <li class="step" data-step="4" tabindex="0"><span class="sn">04</span><h3>restore</h3><pre><code><span class="p">$</span> agentckpt restore b66469f
+<span class="w8">Skipped 1 conflict(s) … re-run with --force</span>
+  ! a.txt
+Restored 2 file(s): + untracked.md …
+<span class="p">$</span> agentckpt restore b66469f --force
+Restored 3 file(s)</code></pre><p>Bytes are written straight back into the tree. Files that differ are refused (exit 1) until you say <code>--force</code>.</p></li>
+      <li class="step" data-step="5" tabindex="0"><span class="sn">05</span><h3>git never noticed</h3><pre><code><span class="p">$</span> git log --oneline
+63fc0ae base</code></pre><p>No <code>add</code>, no <code>commit</code>, no checkout, no branch moves in your real repo. Same HEAD, same index.</p></li>
+    </ol>
   </div>
 </section>
 
-<section class="pains" id="why">
-  <div class="pain"><b>/undo disappeared</b><p>Codex removed <code>/undo</code>; hundreds of developers still want reliable rollback after an agent turn.</p><a href="https://github.com/openai/codex/issues/9203">codex#9203 · 522👍</a></div>
-  <div class="pain"><b>WIP commits pollute history</b><p>Stashing or committing “wip” into your real repo mixes agent noise with your branch. agentckpt keeps undo private.</p><a href="https://www.v2ex.com/t/1218209">v2ex.com/t/1218209</a></div>
-  <div class="pain"><b>Untracked files vanish</b><p>Agents create and delete files git never tracked. Snapshots include untracked paths (gitignore-aware).</p><a href="https://www.v2ex.com/t/1220282">v2ex.com/t/1220282</a></div>
+<section class="rail-sec" aria-labelledby="cmd-h">
+  <header class="sec-head"><p class="kicker">Eight commands</p><h2 id="cmd-h">Small CLI. Honest rules.</h2></header>
+  <ol class="rail">
+    <li><b>init</b><span>create the shadow store</span></li>
+    <li class="on"><b>snap</b><span>checkpoint incl. untracked</span></li>
+    <li><b>watch</b><span>stdlib polling auto-snap</span></li>
+    <li><b>ls</b><span>list, <code>--json</code></span></li>
+    <li><b>diff</b><span>vs tree or <code>--to</code> id</span></li>
+    <li class="on"><b>restore</b><span><code>--force</code>, <code>--path</code></span></li>
+    <li><b>prune</b><span><code>--keep 50</code></span></li>
+    <li><b>doctor</b><span>sanity check</span></li>
+  </ol>
+  <p class="exit"><b>0</b> success · <b>1</b> partial (conflicts skipped) · <b>2</b> hard error</p>
 </section>
 
-<section class="demo" id="demo">
-  <h2>See it in 10 seconds</h2>
-  <p class="sub"><code>agentckpt demo</code> creates a temp tree, snaps, corrupts files, restores, and prints ✅ — used in CI too.</p>
-  <img class="demo-gif" src="demo.gif" width="880" height="520" loading="lazy" alt="Terminal animation: agentckpt init, snap, restore --force, demo passed">
+<section class="demo" aria-labelledby="demo-h">
+  <header class="sec-head"><p class="kicker">Recorded</p><h2 id="demo-h">The same demo CI runs</h2><p class="sub"><code>agentckpt demo</code> builds a temp tree, snaps it, corrupts it, restores it, checks the conflict rule, prunes and runs <code>doctor</code>.</p></header>
+  <img class="demo-gif" src="demo.gif" width="880" height="520" loading="lazy" decoding="async" alt="Terminal animation: agentckpt init, snap, restore --force, demo passed">
 </section>
 
-<section>
-  <h2>Small CLI. Clear rules.</h2>
-  <p class="sub">Eight commands. Shadow git under <code>.agentckpt/</code>. Conflicts refused unless <code>--force</code>.</p>
-  <div class="grid">
-    <div class="card hot"><div class="ico">⌁</div><h3>snap</h3><p>Checkpoint the tree including untracked; skip huge files; never store <code>.agentckpt</code>.</p></div>
-    <div class="card"><div class="ico">↻</div><h3>restore</h3><p>Write snapshot files into the working tree. Real <code>.git</code> is never modified.</p></div>
-    <div class="card"><div class="ico">👁</div><h3>watch</h3><p>Stdlib polling auto-snap on change. No watchdog dependency.</p></div>
-    <div class="card"><div class="ico">☰</div><h3>ls / diff</h3><p>List snapshots, diff vs tree or between ids. <code>--json</code> for scripts.</p></div>
+<section class="install" id="install" aria-labelledby="install-h">
+  <header class="sec-head"><p class="kicker">Install</p><h2 id="install-h">Python 3.9+, git on PATH. Nothing else.</h2><p class="sub">Not on PyPI yet. v0.1.0 ships as a wheel on <a href="https://github.com/Blackman99/agentckpt/releases/tag/v0.1.0">GitHub Releases</a>.</p></header>
+  <div class="cmds">
+    <div class="cmdline"><span class="lbl">try</span><code id="i1">uvx --from git+https://github.com/Blackman99/agentckpt agentckpt demo</code><button class="copy" data-copy="#i1" aria-label="Copy uvx command">copy</button></div>
+    <div class="cmdline"><span class="lbl">install</span><code id="i2">pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.1.0/agentckpt-0.1.0-py3-none-any.whl</code><button class="copy" data-copy="#i2" aria-label="Copy pipx command">copy</button></div>
+    <div class="cmdline"><span class="lbl">use</span><code id="i3">agentckpt init &amp;&amp; agentckpt snap -m "before agent"</code><button class="copy" data-copy="#i3" aria-label="Copy usage command">copy</button></div>
   </div>
 </section>
 
-<section id="install" class="install">
-  <h2>Install in seconds</h2>
-  <div class="panel"><pre><code>uvx --from git+https://github.com/Blackman99/agentckpt agentckpt demo
-# or: pipx install git+https://github.com/Blackman99/agentckpt
-
-agentckpt init
-agentckpt snap -m "before agent"
-agentckpt restore &lt;id&gt; --force</code></pre></div>
-  <div class="facts">
-    <div><b>0 / 1 / 2</b><span>exit codes for scripting</span></div>
-    <div><b>stdlib only</b><span>Python 3.9+ + git</span></div>
-    <div><b>.gitignore</b><span>honoured by default</span></div>
-    <div><b>--force</b><span>explicit overwrite</span></div>
-  </div>
+<section class="limits" aria-labelledby="lim-h">
+  <header class="sec-head"><p class="kicker">Limits, v0.1.0</p><h2 id="lim-h">What it won't do</h2></header>
+  <ul class="lim">
+    <li><b>Restore doesn't delete.</b> Files the agent created after the snapshot stay. <code>agentckpt diff &lt;id&gt;</code> shows them.</li>
+    <li><b>Only what it saw.</b> Gitignored files and files over 10&nbsp;MiB (<code>--max-bytes</code>) aren't stored.</li>
+    <li><b>Polling, not hooks.</b> <code>watch</code> may catch a half-written state. Agent hooks are planned for v0.2.</li>
+    <li><b>An undo buffer, not a backup.</b> The store lives in the project, so <code>git clean -fdx</code> removes it too.</li>
+  </ul>
 </section>
 
 <section class="final">
-  <h2>Snap before the agent. Restore after.</h2>
-  <div class="cta" style="justify-content:center">
-    <a class="btn primary" href="docs/">Documentation</a>
+  <h2>Snap before the agent.<br><span class="hl">Restore after.</span></h2>
+  <div class="cta center">
+    <a class="btn primary" href="docs/"><span class="dia" aria-hidden="true"></span>Documentation</a>
+    <a class="btn" href="docs/blog/">Blog: EN / 中文</a>
     <a class="btn" href="https://github.com/Blackman99/agentckpt">Star on GitHub</a>
   </div>
 </section>
@@ -111,6 +197,6 @@ agentckpt restore &lt;id&gt; --force</code></pre></div>
   <span>MIT © 2026 Blackman99</span>
   <span><a href="docs/">Docs</a> · <a href="docs/blog/">Blog</a> · <a href="https://github.com/Blackman99/agentckpt">GitHub</a> · <a href="https://github.com/Blackman99/agentckpt/releases">Releases</a></span>
 </footer>
-<script src="app.js"></script>
+<script src="app.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,2 @@
+Martian Mono (c) Evil Martians and Instrument Sans (c) The Instrument Sans Project Authors.
+Both licensed under the SIL Open Font License 1.1 (https://openfontlicense.org). Files here are static, Latin-subset WOFF2 builds.
