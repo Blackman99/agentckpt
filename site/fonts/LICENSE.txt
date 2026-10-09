@@ -1,2 +1,3 @@
-Martian Mono (c) Evil Martians and Instrument Sans (c) The Instrument Sans Project Authors.
-Both licensed under the SIL Open Font License 1.1 (https://openfontlicense.org). Files here are static, Latin-subset WOFF2 builds.
+Big Shoulders (c) The Big Shoulders Project Authors; Newsreader (c) The Newsreader Project Authors (Production Type);
+IBM Plex Mono (c) IBM Corp.; Permanent Marker (c) Font Diner.
+All licensed under the SIL Open Font License 1.1 (https://openfontlicense.org). Files here are static, Latin-subset WOFF2 builds.

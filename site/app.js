@@ -3,124 +3,110 @@
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var hasIO = "IntersectionObserver" in window;
 
   /* copy buttons */
   $$(".copy").forEach(function (b) {
     b.addEventListener("click", function () {
-      var el = $(b.getAttribute("data-copy"));
-      if (!el) return;
-      var t = el.textContent;
-      var done = function () { b.textContent = "copied"; b.classList.add("done"); setTimeout(function () { b.textContent = "copy"; b.classList.remove("done"); }, 1400); };
-      if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, done); else done();
+      var el = $(b.getAttribute("data-copy")); if (!el) return;
+      var done = function () { b.textContent = "copied!"; b.classList.add("done"); setTimeout(function () { b.textContent = "copy"; b.classList.remove("done"); }, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(el.textContent).then(done, done); else done();
     });
   });
 
-  /* hero deck: snap -> agent damage -> one-step restore, git row never moves */
-  var deck = $("#deck");
-  if (deck) {
-    var files = {}; $$("#files li").forEach(function (li) { files[li.getAttribute("data-f")] = li; });
-    var head = $("#playhead"), span = $("#agentspan"), cmd = $("#cmd"), tc = $("#tc"), git = $("#gitrow");
-    var ck = [$("#ck1"), $("#ck2"), $("#ck3")];
-    var timers = [], running = false;
-    var P = '<span class="p">$</span> ';
-    function tag(f, cls, text) {
-      var li = files[f]; li.classList.remove("saved", "mod", "del", "new", "back", "kept");
-      if (cls) li.classList.add(cls);
-      li.querySelector(".tag").textContent = text || "";
+  /* grease pencil marks that draw once when seen */
+  var draws = $$("[data-draw]");
+  if (reduce || !hasIO) draws.forEach(function (d) { d.classList.add("drawn"); });
+  else {
+    var dio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { setTimeout(function () { e.target.classList.add("drawn"); }, 250); dio.unobserve(e.target); } });
+    }, { threshold: 0.6 });
+    draws.forEach(function (d) { dio.observe(d); });
+  }
+
+  /* hero: the work print runs through the gate; the negative never moves */
+  var reel = $("#reel"), strip = $("#strip");
+  if (reel && strip) {
+    var frames = $$(".strip > .fr"), f2 = $("#f2"), f5 = $("#f5"), rest = $("#rest"), unt = $("#untouched");
+    var fc = $("#fc"), cmd = $("#cmd"), cap = $("#cap"), lamp = $(".lamp");
+    var cur = 1, timers = [], running = false;
+    var CAP = {
+      1: "Frame 1: <code>agentckpt init</code> sets up a private store in <code>.agentckpt/</code>.",
+      2: "Frame 2: <code>snap</code> circles this frame. Tracked and untracked files go into the shadow store.",
+      3: "Frame 3: agent turn 1 edits <code>src/app.py</code>.",
+      4: "Frame 4: turn 2 deletes <code>src/utils.py</code> and the untracked <code>notes.md</code>.",
+      5: "Frame 5: turn 3 adds <code>scratch.py</code> and breaks the build. NG.",
+      6: "Rewinding to the circled frame…",
+      7: "Back on frame 2: <code>utils.py</code> and untracked <code>notes.md</code> are restored. <code>scratch.py</code> stays (restore never deletes). The negative didn't move."
+    };
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    function place(i, mode) {
+      cur = i;
+      var fw = frames[0].getBoundingClientRect().width;
+      var x = Math.round(reel.clientWidth / 2 - (i + 0.5) * fw);
+      strip.style.transition = mode === "rewind" ? "transform 1.1s cubic-bezier(.65,0,.35,1)" : mode === "cut" ? "none" : "transform .75s cubic-bezier(.4,0,.2,1)";
+      strip.style.transform = "translateX(" + x + "px)";
+      fc.textContent = pad(i);
     }
     function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
     function clear() { timers.forEach(clearTimeout); timers = []; }
+    function noAnim(els, fn) { els.forEach(function (e) { e.style.transition = "none"; $$(".gp", e).forEach(function (g) { g.style.transition = "none"; }); }); fn(); void strip.offsetWidth; els.forEach(function (e) { e.style.transition = ""; $$(".gp", e).forEach(function (g) { g.style.transition = ""; }); }); }
     function reset() {
-      ["readme", "app", "utils", "notes", "scratch"].forEach(function (f) { tag(f, "", ""); });
-      ck.forEach(function (c) { c.classList.remove("in", "target"); });
-      head.classList.remove("rewind"); head.style.transition = "none"; head.style.transform = "translateX(4%)";
-      span.style.transition = "none"; span.style.transform = "scaleX(0)"; span.style.opacity = "1";
-      git.classList.remove("pulse");
-      cmd.innerHTML = P + 'agentckpt snap -m "before agent"'; tc.textContent = "T+00:00";
-      void head.offsetWidth; head.style.transition = ""; span.style.transition = "";
-    }
-    function snapState() {
-      head.style.transition = "transform .5s var(--ease)"; head.style.transform = "translateX(14%)";
-      ck[0].classList.add("in");
-      ["readme", "app", "utils", "notes"].forEach(function (f) { tag(f, "saved", "◆ saved"); });
-      tc.textContent = "T+00:01";
-    }
-    function agentState() {
-      ["readme", "app", "utils", "notes"].forEach(function (f) { tag(f, "", ""); });
-      cmd.innerHTML = '<span style="color:var(--agent)">● agent turn</span> <span style="color:var(--mut)">editing…</span>';
-      head.style.transition = ""; head.style.transform = "translateX(74%)"; span.style.transform = "scaleX(1)"; tc.textContent = "T+04:12";
-    }
-    function restoreCmd() {
-      cmd.innerHTML = P + "agentckpt restore b66469f --force"; tc.textContent = "T+04:20";
-      head.classList.add("rewind"); head.style.transform = "translateX(14%)"; ck[0].classList.add("target"); span.style.opacity = ".3";
-    }
-    function restored() {
-      tag("readme", "", "= unchanged");
-      tag("app", "back", "↺ restored"); tag("utils", "back", "↺ restored"); tag("notes", "back", "↺ restored");
-      tag("scratch", "kept", "new · left in place");
-      git.classList.add("pulse");
+      noAnim([f2, f5, rest, unt], function () { [f2, f5, rest, unt].forEach(function (e) { e.classList.remove("on"); }); });
+      lamp.classList.remove("run");
+      place(1, "cut"); cmd.textContent = "$ agentckpt init"; cap.innerHTML = CAP[1];
     }
     function finalState() {
-      reset(); ck.forEach(function (c) { c.classList.add("in"); }); ck[0].classList.add("target");
-      head.style.transform = "translateX(14%)"; span.style.transform = "scaleX(1)"; span.style.opacity = ".3";
-      cmd.innerHTML = P + "agentckpt restore b66469f --force"; tc.textContent = "T+04:20";
-      restored();
+      [f2, f5, rest, unt].forEach(function (e) { e.classList.add("on"); });
+      place(2, "cut"); cmd.textContent = "$ agentckpt restore b66469f --force"; cap.innerHTML = CAP[7];
     }
     function run() {
       clear(); reset(); running = true;
-      at(500, snapState);
-      at(2000, agentState);
-      at(2500, function () { tag("app", "mod", "M modified"); });
-      at(3000, function () { ck[1].classList.add("in"); });
-      at(3300, function () { tag("utils", "del", "deleted"); });
-      at(3800, function () { tag("notes", "del", "deleted"); });
-      at(4200, function () { tag("scratch", "new", "+ new"); ck[2].classList.add("in"); });
-      at(5300, restoreCmd);
-      at(6300, restored);
-      at(11000, run);
+      at(1300, function () { place(2); cmd.textContent = '$ agentckpt snap -m "before agent"'; cap.innerHTML = CAP[2]; });
+      at(2000, function () { f2.classList.add("on"); });
+      at(3400, function () { lamp.classList.add("run"); place(3); cmd.textContent = "● agent running: turn 1"; cap.innerHTML = CAP[3]; });
+      at(4800, function () { place(4); cmd.textContent = "● agent running: turn 2"; cap.innerHTML = CAP[4]; });
+      at(6200, function () { place(5); cmd.textContent = "● agent running: turn 3"; cap.innerHTML = CAP[5]; });
+      at(6900, function () { f5.classList.add("on"); lamp.classList.remove("run"); });
+      at(8300, function () { cmd.textContent = "$ agentckpt restore b66469f --force"; cap.innerHTML = CAP[6]; place(2, "rewind"); fc.textContent = "05"; [4, 3, 2].forEach(function (n, k) { at(300 + k * 300, function () { fc.textContent = pad(n); }); }); });
+      at(9600, function () { rest.classList.add("on"); unt.classList.add("on"); cap.innerHTML = CAP[7]; });
+      at(15000, run);
     }
     function stop() { clear(); running = false; }
-    if (reduce) { finalState(); }
-    else if ("IntersectionObserver" in window) {
+    window.addEventListener("resize", function () { place(cur, "cut"); });
+    if (reduce) finalState();
+    else if (hasIO) {
+      place(1, "cut");
       new IntersectionObserver(function (es) {
-        es.forEach(function (e) { if (e.isIntersecting && !running) run(); else if (!e.isIntersecting && running) stop(); });
-      }, { threshold: 0.2 }).observe(deck);
-      document.addEventListener("visibilitychange", function () { if (document.hidden) stop(); });
-      deck.addEventListener("click", run);
-    } else { run(); }
+        es.forEach(function (e) { if (e.isIntersecting && !running) run(); else if (!e.isIntersecting && running) { stop(); } });
+      }, { threshold: 0.15 }).observe(reel);
+      document.addEventListener("visibilitychange", function () { if (document.hidden && running) stop(); });
+      reel.addEventListener("click", run);
+    } else run();
   }
 
-  /* how it works: scroll- or tap-driven state */
-  var stage = $("#stage"), steps = $$(".step");
-  if (stage && steps.length) {
-    var treeS = $("#tree-state"), shadowS = $("#shadow-state"), dias = $("#dias");
-    var model = {
-      1: ["a.txt · untracked.md", "init commit", 0],
-      2: ["3 files incl. untracked", "1 snapshot", 1],
-      3: ["a.txt M · untracked.md ✕ · new.py +", "1 snapshot + auto", 2],
-      4: ["a.txt, untracked.md back · new.py kept", "restore from b66469f", 2],
-      5: ["back to before the agent", "2 snapshots", 2]
-    };
-    var cur = 0;
-    function setStep(n) {
-      if (n === cur) return; cur = n;
-      stage.setAttribute("data-step", n);
-      steps.forEach(function (s) { s.classList.toggle("active", +s.getAttribute("data-step") === n); });
-      var m = model[n]; if (!m) return;
-      treeS.textContent = m[0]; shadowS.textContent = m[1];
-      if (dias.children.length !== m[2]) { dias.innerHTML = ""; for (var i = 0; i < m[2]; i++) dias.appendChild(document.createElement("i")); }
+  /* EDL: the active row drives the viewer */
+  var viewer = $("#viewer"), rows = $$(".row");
+  if (viewer && rows.length) {
+    var vfn = $("#vfn"), vstate = $("#vstate"), vdots = $("#vdots");
+    var M = { 1: ["init", 0], 2: ["snap · b66469f", 1], 3: ["agent turn · NG", 2], 4: ["restored from b66469f", 2], 5: ["negative checked", 2] };
+    var step = 0;
+    function set(n) {
+      if (n === step) return; step = n;
+      viewer.setAttribute("data-step", n);
+      rows.forEach(function (r) { var k = +r.getAttribute("data-step"); r.classList.toggle("active", k === n); r.classList.toggle("on", k <= n); });
+      vfn.textContent = "00" + n; vstate.textContent = M[n][0];
+      if (vdots.children.length !== M[n][1]) { vdots.innerHTML = ""; for (var i = 0; i < M[n][1]; i++) vdots.appendChild(document.createElement("i")); }
     }
-    setStep(1);
-    if ("IntersectionObserver" in window) {
-      var io = new IntersectionObserver(function (es) {
-        es.forEach(function (e) { if (e.isIntersecting) setStep(+e.target.getAttribute("data-step")); });
-      }, { rootMargin: "-45% 0px -45% 0px" });
-      steps.forEach(function (s) { io.observe(s); });
+    set(1);
+    if (hasIO) {
+      var rio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) set(+e.target.getAttribute("data-step")); }); }, { rootMargin: "-45% 0px -45% 0px" });
+      rows.forEach(function (r) { rio.observe(r); });
     }
-    steps.forEach(function (s) {
-      var go = function () { setStep(+s.getAttribute("data-step")); };
-      s.addEventListener("click", go);
-      s.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    rows.forEach(function (r) {
+      var go = function () { set(+r.getAttribute("data-step")); };
+      r.addEventListener("click", go);
+      r.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
     });
   }
 })();
