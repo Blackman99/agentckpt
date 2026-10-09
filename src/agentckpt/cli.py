@@ -199,50 +199,50 @@ def cmd_demo(args: argparse.Namespace) -> int:
 
         S.init_store(root)
         snap1, _ = S.snap(root, message="demo: initial")
-        print(f"✓ snap {snap1.id}  ({snap1.file_count} files)")
+        print(f"[ok] snap {snap1.id}  ({snap1.file_count} files)")
 
         (root / "hello.txt").write_text("hello agent — corrupted by agent\n", encoding="utf-8")
         (root / "src" / "app.py").write_text("print('v2 broken')\n", encoding="utf-8")
         (root / "src" / "new.py").write_text("# accidental\n", encoding="utf-8")
 
         snap2, _ = S.snap(root, message="demo: after agent edit")
-        print(f"✓ snap {snap2.id}  ({snap2.file_count} files)")
+        print(f"[ok] snap {snap2.id}  ({snap2.file_count} files)")
 
         diff = S.diff_snapshot(root, snap1.id)
         assert "hello agent" in diff or "corrupted" in diff or diff
-        print("✓ diff shows agent edits")
+        print("[ok] diff shows agent edits")
 
         result = S.restore(root, snap1.id, force=True)
         assert (root / "hello.txt").read_text(encoding="utf-8") == "hello agent\n"
         assert (root / "src" / "app.py").read_text(encoding="utf-8") == "print('v1')\n"
-        print(f"✓ restore {snap1.id} → {len(result['restored'])} files")
+        print(f"[ok] restore {snap1.id} → {len(result['restored'])} files")
 
         # Conflict path
         (root / "hello.txt").write_text("local edit\n", encoding="utf-8")
         conflicted = S.restore(root, snap1.id, force=False)
         assert "hello.txt" in conflicted["skipped_conflict"]
-        print("✓ conflict refused without --force")
+        print("[ok] conflict refused without --force")
 
         snaps = S.list_snapshots(root)
         assert len(snaps) >= 2
-        print(f"✓ ls → {len(snaps)} snapshots")
+        print(f"[ok] ls → {len(snaps)} snapshots")
 
         dropped = S.prune(root, keep=1)
         assert len(S.list_snapshots(root)) == 1
-        print(f"✓ prune kept 1 (dropped {len(dropped)})")
+        print(f"[ok] prune kept 1 (dropped {len(dropped)})")
 
         rep = S.doctor(root)
         assert rep["ok"], rep
-        print("✓ doctor OK")
+        print("[ok] doctor OK")
 
         # gitignore respected: noise.pyc never in tree
         tip = S.current_tip(root)
         assert tip is not None
         names = S._files_in_tree(root, tip.full_id)
         assert "noise.pyc" not in names
-        print("✓ .gitignore respected")
+        print("[ok] .gitignore respected")
 
-        print("✅ agentckpt demo passed")
+        print("PASS: agentckpt demo passed")
         return 0
 
 
