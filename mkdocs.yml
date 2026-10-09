@@ -40,6 +40,10 @@ nav:
   - Configuration: configuration.md
   - Command reference: reference.md
   - FAQ: faq.md
+  - Blog:
+    - All posts: blog/index.md
+    - "Undo for coding agents, outside git": blog/agent-undo-without-touching-git.md
+    - "不碰 git 的智能体撤销": blog/agent-undo-without-touching-git-zh.md
   - Home page ↗: https://blackman99.github.io/agentckpt/
 
 markdown_extensions:

@@ -19,3 +19,4 @@ agentckpt restore <id> --force
 - [Usage](usage.md)
 - [Command reference](reference.md)
 - [FAQ](faq.md)
+- [Blog](blog/index.md): [English intro](blog/agent-undo-without-touching-git.md) · [中文介绍](blog/agent-undo-without-touching-git-zh.md)

@@ -29,4 +29,4 @@ agentckpt restore <id> --force    # overwrite divergent files; omit --force to s
 
 Auto-snap while an agent works: `agentckpt watch`. Housekeeping: `agentckpt prune --keep 50`, `agentckpt doctor`.
 
-**Docs:** [blackman99.github.io/agentckpt/docs](https://blackman99.github.io/agentckpt/docs/) · MIT
+**Docs:** [blackman99.github.io/agentckpt/docs](https://blackman99.github.io/agentckpt/docs/) · **Blog:** [English](https://blackman99.github.io/agentckpt/docs/blog/agent-undo-without-touching-git/) · [中文](https://blackman99.github.io/agentckpt/docs/blog/agent-undo-without-touching-git-zh/) · MIT
