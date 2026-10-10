@@ -1,4 +1,4 @@
-/* agentckpt v4: Game Boy level. 10 fps frame stepping, whole native pixels, four DMG colours. */
+/* agentckpt v3: Game Boy level. 10 fps frame stepping, whole native pixels, four DMG colours. */
 (function () {
   "use strict";
   var C = ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"];

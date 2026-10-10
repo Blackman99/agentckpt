@@ -1,7 +1,7 @@
-# agentckpt landing page: design notes (v4, Game Boy save checkpoint)
+# agentckpt landing page: design notes (v3, Game Boy save checkpoint)
 
 Brief: `/workspace/oss-factory/design/briefs/agentckpt.md`. Registry: `/workspace/oss-factory/design/registry.md`.
-This replaces v3 completely. There is no film, no grey paper, no grease pencil and no red anywhere.
+This replaces v2 (film bench) completely. There is no film, no grey paper, no grease pencil and no red anywhere.
 
 ## Direction / metaphor
 A **Game Boy (DMG) platformer level with a checkpoint flag**.
