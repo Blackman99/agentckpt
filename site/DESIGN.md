@@ -1,107 +1,97 @@
-# agentckpt landing page: design notes (v3)
+# agentckpt landing page: design notes (v4, Game Boy save checkpoint)
 
-## Reference object
-A **film-editing bench with a darkroom contact sheet** on it. A coding-agent session is a roll of film.
-Each agent turn is one **frame**. A snapshot is a frame the editor has **circled in red grease pencil**
-(china marker). A wrecked turn is a frame marked with a red **X / "NG"** (no good, standard slate/editing shorthand).
-`restore` means the editor **winds the strip back to the circled frame**. The user's real git repo is the
-**camera negative**: it sits in its own sleeve on the bench and is never cut. The orange negative stays still
-while the work print runs.
+Brief: `/workspace/oss-factory/design/briefs/agentckpt.md`. Registry: `/workspace/oss-factory/design/registry.md`.
+This replaces v3 completely. There is no film, no grey paper, no grease pencil and no red anywhere.
 
-Mapping used everywhere on the page:
+## Direction / metaphor
+A **Game Boy (DMG) platformer level with a checkpoint flag**.
 
-| Film bench | agentckpt |
+| Game | agentckpt |
 |---|---|
-| work print running through the gate | working tree as the agent edits it |
-| frame number / edge print | snapshot id (`b66469f`) and timecode |
-| grease-pencil circle | `agentckpt snap` checkpoint |
-| red X + "NG" | the turn that broke things |
-| rewinding to the circled frame | `agentckpt restore <id>` |
-| uncut orange camera negative | your `.git` (HEAD, index, branches untouched) |
-| edit decision list (EDL) / cutting sheet | the init → snap → restore walkthrough |
-| film-can masking-tape label | limits / notes |
-| slate / clapper | install "takes" |
+| the little robot running through the level | the coding agent, one step per turn |
+| touching the checkpoint flag, flag rises, "SAVED" | `agentckpt snap` (shadow commit `b66469f`) |
+| blocks shattering as the robot runs through them | the agent breaking or deleting files, untracked ones included |
+| dithered block | an untracked file (git never saw it) |
+| `CONTINUE? ▶ YES` and respawning at the flag, world rebuilt | `agentckpt restore b66469f` |
+| a block the robot placed that stays after continue | a file created after the snap (restore never deletes) |
+| bedrock rows at the bottom of the screen that never change | your real `.git`: HEAD, index and branches |
+| HUD: SNAPSHOTS ×n · WORLD 1-x · TIME | page header / nav |
+| levels WORLD 1-1 … 1-4 | sections: install, save, continue, limits |
 
-## Palette (no gradients anywhere)
-- Bench / ground: warm grey `#cbc5b8`, with darker grey `#b9b2a3` for rules and shadows. Flat colour, plus a
-  very faint paper-fibre texture (tiny inline SVG noise at 4% opacity).
-- Photo paper (contact sheet): warm off-white `#efebe3`.
-- Film base / rebate (strip): brown-black `#1c1815`. Sprocket holes are the ground colour showing through.
-- Print image tones inside frames: `#2a2622` ink on `#e9e4da` (positive prints of the file tree).
-- Camera negative (= git): colour-negative orange mask `#b4632c` with darker `#7c3f17` density, and
-  edge print in negative-yellow `#f0c75a`.
-- Grease pencil: china-marker red `#c3261b`.
-- Darkroom safelight accent: amber `#d9861c`, used sparingly (frame counter, "now in gate" lamp, focus ring).
-- Text: ink `#1f1b17`, muted `#5a534a`.
-No cyan, purple or blue. No glow, no blur, no translucent glass. Shadows are short, hard and offset, like
-paper lying on a bench.
+## Palette: only the four DMG shades, nothing else
+| Token | Hex | Use |
+|---|---|---|
+| `--c0` darkest | `#0f380f` | text, outlines, HUD bar, bedrock |
+| `--c1` dark | `#306230` | secondary text, shading, bricks |
+| `--c2` light | `#8bac0f` | LCD dot-matrix lines, dither, panels |
+| `--c3` lightest | `#9bbc0f` | LCD background |
+No fifth colour, no red, no white, no black, no transparency tints, no gradients, no shadows, no glow.
+Images that are not ours (the terminal demo GIF) are re-quantised to these four colours (`demo-dmg.gif`).
 
-## Type (four faces, all self-hosted, Latin subset, static instances)
-- **Big Shoulders** 800 (condensed, industrial, film-can / slate lettering): headlines, frame numbers.
-- **IBM Plex Mono** 400/600: edge print, EDL table, commands. Small uppercase, letter-spaced like
-  Kodak edge codes.
-- **Newsreader** 400 (+600): body copy, like an editor's handbook.
-- **Permanent Marker**: grease-pencil annotations only (a handful of words: "keep", "NG", "untouched").
-No Inter, no system-sans + mono pairing.
+## Type (self-hosted, OFL, Latin subset)
+- **Silkscreen** 400/700: titles, HUD, labels, buttons. Set only at multiples of 8px (its pixel = 1/8 em),
+  so glyphs land on whole pixels.
+- **Pixelify Sans** 400/600: body copy and command lines (it has real lowercase, which commands need).
+- In-canvas text uses a hand-built **3×5 pixel font** drawn on the integer-scaled canvas.
+Metric-matched fallbacks prevent layout shift while fonts load.
 
-## Layout
-1. **Edge-print bar** (nav): one thin dark strip across the top with sprocket holes and edge-print text
-   `AGENTCKPT ▸ 5063 ▸ ROLL 01`, links typed in the same edge-print style.
-2. **Hero: stacked, full width, no side card.**
-   - A slate-style title block: huge condensed uppercase headline "EVERY AGENT TURN IS A FRAME.
-     CUT BACK TO THE GOOD ONE." with "GOOD ONE" circled by a hand-drawn red SVG ellipse.
-   - Below it, **full-bleed film strip** (the hero animation) spanning the viewport, with an editor's
-     **gate** marker fixed in the middle and a frame counter.
-   - Directly under the strip, the **orange negative** strip labelled "your .git (camera negative, never cut)".
-   - Under that, a narrow single column of body copy, a typed install line and two buttons styled as
-     film-can tape labels (flat, offset hard shadow).
-3. **Contact sheet** ("why"): one sheet of photo paper with **two strips of frames** laid side by side,
-   like a real contact sheet. Each frame is a pain point printed as a frame with a frame number. The
-   pains are marked NG in grease pencil, and the last frame (agentckpt) is circled. It reads as a
-   contact sheet, not a card grid: frames butt together on the strip, sprocket holes run above and below,
-   and captions sit in the edge print.
-4. **Edit decision list** (scroll-driven): a typed EDL table (`EVENT REEL TRANS SRC-IN SRC-OUT NOTE`)
-   with rows 001 init, 002 snap, 003 agent, 004 restore, 005 verify. A sticky **viewer** beside it
-   (a single film frame plus the negative) changes state as each row reaches the middle of the screen,
-   and the active row gets a hand-drawn red tick. On phones the viewer sits at the top (sticky) and the
-   rows stack. Rows can also be tapped.
-5. **Command key**: the eight commands as an edge-code legend on a single strip of film leader.
-6. **Projection print**: the existing demo.gif mounted in a vertical 35mm frame with sprocket rails.
-7. **Slate**: install "takes" (TAKE 1 try with uvx, TAKE 2 install wheel from Releases, TAKE 3 use),
-   with a clapper bar of black/off-white diagonal stripes and copy buttons.
-8. **Masking-tape labels**: limits written on strips of tape stuck at slight angles.
-9. **Footer**: edge-print strip again; links to Docs, Blog, GitHub, Releases.
+## Texture and rendering
+- LCD dot-matrix ground: a 4×4 SVG tile (one `#8bac0f` pixel line on `#9bbc0f`), not a CSS gradient.
+- Pixel art drawn on `<canvas>` at native resolution (scene is 120 px tall) and scaled by an **integer** factor
+  (3× on phones, 5× on desktop) with `image-rendering: pixelated`. Native width is computed so the scene fills
+  the viewport. No smoothing and no sub-pixel positions.
+- 1-bit-style **ordered dither** (checkerboard) for untracked blocks, bedrock and the screen wipe.
+- Logo, favicon, OG image and social preview use the same sprites and palette.
 
-## Animation
-- **Hero strip loop (~12 s):** the work print advances one frame per agent turn behind the fixed gate
-  (transform only). Frame 2 is "snap: before agent" and the grease-pencil circle draws around it
-  (SVG stroke-dashoffset). Frames 3 to 5 show the file tree degrading (app.py marked M, utils.py
-  missing, untracked notes.md missing, scratch.py new). Frame 5 gets a red X and "NG". Then the
-  strip **rewinds fast** back to circled frame 2, the counter rolls back, and the gate frame shows
-  "restored" with untracked notes.md back and scratch.py noted as left in place. The orange
-  negative under it **never moves**; a grease-pencil tick "untouched" is drawn on it at the end.
-- **EDL scroll demo:** IntersectionObserver picks the active row; the viewer frame swaps its print,
-  the circle/X/tick marks draw, and the negative stays still with an "unchanged" mark.
-- **Micro-interactions:** hovering a contact-sheet frame lifts it like a loupe (scale plus hard shadow);
-  copy buttons show "copied" in grease pencil; tape labels straighten on hover; links get a
-  grease-pencil underline.
-- `prefers-reduced-motion`: no strip movement and no drawing. The final state is shown statically
-  (circle, X, restored frame, tick).
-- Performance: transform and opacity only, animation pauses when off-screen, no framework, fonts
-  subset with metric-matched fallbacks.
+## Layout (8 px grid)
+- **HUD bar** (sticky, `#0f380f`): `AGENTCKPT` · `SNAPSHOTS ×n` · `WORLD 1-x` · `TIME` · menu links with a ▶ cursor.
+- **Title screen = the level itself.** A full-bleed canvas scene. The title is set inside the sky at the top-left of
+  the game screen, like a level title card. It is neither a centred title over an object nor left copy beside a
+  right card. The bedrock strip at the bottom carries `GIT HEAD 63FC0AE · INDEX CLEAN`.
+- Below it, a **dialog box** (double pixel border, game-text style) with the lede and two menu buttons.
+- Sections are **levels**, each opened by a level banner (`WORLD 1-1 INSTALL`) on a brick strip:
+  - PROLOGUE: why (three hint lines inside one dialog box)
+  - WORLD 1-1 INSTALL: menu of options with an `[A] COPY` button
+  - WORLD 1-2 SAVE / 1-3 CONTINUE: scroll-driven demo. A step menu with a ▶ cursor, plus a sticky
+    "game screen" with three lanes: WORLD (working tree blocks), SAVE SLOTS (`.agentckpt`), BEDROCK (`.git`)
+  - ITEMS: the eight commands as an inventory list
+  - REPLAY: `agentckpt demo` recording, quantised to DMG green
+  - WORLD 1-4 LIMITS: "KNOWN GLITCHES" list
+  - END: `CONTINUE? ▶ DOCS / BLOG / GITHUB`
+- Everything is left-aligned to the grid. No paper sheets, no stacked cards and no drop shadows.
 
-## Banned-list self-check
-| Banned | This design |
+## Animation (frame-by-frame, no easing)
+- Canvas loop at **10 fps** (`setTimeout` frame stepping). Sprites move in whole native pixels. Sequence:
+  the robot runs in → touches the flag → the flag climbs the pole in steps → `SAVED B66469F` → it runs through three
+  file blocks (one dithered = untracked), each shattering in 4 frames → it drops a `NEW` block →
+  `CONTINUE? ▶YES` blinks → dither wipe → the world is rebuilt with the robot at the flag. The `NEW` block is still
+  there, and the bedrock text blinks `UNCHANGED`. The bedrock pixels never change.
+- CSS animations use only `steps()`: blinking cursors, HUD counters, block shatter sprite (4 steps), button
+  press (1 px down).
+- `prefers-reduced-motion`: the canvas draws only the final frame (flag up, world rebuilt, NEW block kept, bedrock
+  "UNCHANGED"); CSS animations are off.
+- The loop pauses when the scene is off-screen or the tab is hidden.
+
+## Logo
+16×16 pixel checkpoint flag on a square `#9bbc0f` LCD field (no rounded corners, no outline frame), with pole,
+flag, ground bricks and dithered bedrock, using the four DMG colours only. Exported as SVG with `crispEdges`
+rects and as a 512 px PNG (32× nearest-neighbour).
+
+## Self-check against playbook bans and the registry
+| Rule | Result |
 |---|---|
-| Dark background with cyan/purple/blue gradients | **Pass.** Warm grey bench ground, flat colours, no cyan/purple/blue, no gradients. The old timeline is removed. |
-| Gradient text | **Pass.** Solid ink text; emphasis is a hand-drawn red circle around words. |
-| Glow | **Pass.** No box-shadow blur glows; only short hard offset shadows (paper on a bench). |
-| Glassmorphism | **Pass.** No backdrop-filter, no translucency; the nav is an opaque film strip. |
-| Left-copy / right-animated-card hero | **Pass.** Stacked hero: headline, full-bleed strip, negative, then copy. No side card. |
-| Three-column feature cards | **Pass.** Pains are frames on a contact sheet (two butted strips with sprockets); commands are an edge-code legend on one strip. |
-| Generic SaaS/devtool template layout | **Pass.** Every section maps to a bench object (strip, contact sheet, EDL, slate, tape labels, projection print). |
-| Inter + monospace combo | **Pass.** Big Shoulders + Newsreader + IBM Plex Mono (edge print) + Permanent Marker; no Inter. |
-| Overlap with toolsmoke (smoke-test bench / paper inspection report) | **Pass.** No report forms, stamps, checkboxes or typewriter face. Dominant objects are black film strips with sprockets and an orange negative on a grey bench; red is hand-drawn grease pencil, not stamps. |
-
-Note: `assets/logo.svg` (also the bot avatar) still uses the old cyan/violet gradient. The page header
-uses a typographic mark instead. Redrawing the logo is a separate decision because the avatar must change with it.
+| Dark bg + cyan/purple/blue gradient | Pass. Mid-tone yellow-green LCD, four flat colours. |
+| Gradient text / glow / glassmorphism | Pass. None; no CRT bloom either. |
+| Left-copy/right-card hero | Pass. Full-bleed game screen with the title inside the sky. |
+| Three-column feature cards | Pass. Dialog boxes, menus and lists. |
+| SaaS template / Inter + mono | Pass. Silkscreen + Pixelify Sans only. |
+| Cross-project bans: beige/kraft/manila paper, paper texture | Pass. LCD green, dot-matrix texture. |
+| Red ink circles, stamps, red X | Pass. No red exists in the palette. |
+| Typewriter fonts | Pass. Pixel fonts only. |
+| Line-by-line receipt printing animation | Pass. Sprite animation; text appears as game dialog. |
+| Hard-shadow paper stacks / centred skeuomorph + cards | Pass. Full-bleed scene, left-aligned levels on bricks. |
+| Rounded app-icon logo with outlined cartoon object | Pass. Square 16×16 pixel sprite, no rounding, no outline frame. |
+| vs toolsmoke (light warm paper, Fraunces/Courier Prime/Caveat, vermilion) | Different on every axis. |
+| vs certfan (near-black, Anybody/Atkinson, acid yellow-green #d6ff3b + hot pink, vector lines) | certfan is dark with a single neon line accent. agentckpt is a mid-tone LCD field in four muted greens, pixel raster. No shared hex or font. |
+| vs linelore (pure white, Schibsted Grotesk, international orange, kinetic type) | Different on every axis. |
+| vs runbill (concrete grey, Unbounded/Red Hat, isometric 3D, cobalt) | Different on every axis. |

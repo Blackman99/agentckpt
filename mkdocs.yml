@@ -12,19 +12,10 @@ theme:
   favicon: assets/logo.svg
   logo: assets/logo.svg
   palette:
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: black
-      accent: cyan
-      toggle: {icon: material/weather-sunny, name: Light mode}
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: black
-      accent: deep purple
-      toggle: {icon: material/weather-night, name: Dark mode}
-  font:
-    text: Inter
-    code: JetBrains Mono
+    scheme: default
+    primary: custom
+    accent: custom
+  font: false
   features:
     - navigation.instant
     - navigation.sections
@@ -45,6 +36,9 @@ nav:
     - "Undo for coding agents, outside git": blog/agent-undo-without-touching-git.md
     - "不碰 git 的智能体撤销": blog/agent-undo-without-touching-git-zh.md
   - Home page ↗: https://blackman99.github.io/agentckpt/
+
+extra_css:
+  - stylesheets/dmg.css
 
 markdown_extensions:
   - admonition

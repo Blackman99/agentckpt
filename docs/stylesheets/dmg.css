@@ -1,0 +1,48 @@
+/* agentckpt docs: Game Boy DMG theme. Four colours only, pixel fonts. Matches site/DESIGN.md. */
+@font-face{font-family:"Silkscreen";src:url(../assets/fonts/silkscreen-regular.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Silkscreen";src:url(../assets/fonts/silkscreen-bold.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Pixelify Sans";src:url(../assets/fonts/pixelify-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Pixelify Sans";src:url(../assets/fonts/pixelify-600.woff2) format("woff2");font-weight:500 700;font-display:swap}
+:root,[data-md-color-scheme=default]{
+  --c0:#0f380f;--c1:#306230;--c2:#8bac0f;--c3:#9bbc0f;
+  --md-text-font-family:"Pixelify Sans",sans-serif;--md-code-font-family:"Pixelify Sans",monospace;
+  --md-primary-fg-color:#0f380f;--md-primary-fg-color--light:#306230;--md-primary-fg-color--dark:#0f380f;
+  --md-primary-bg-color:#9bbc0f;--md-primary-bg-color--light:#8bac0f;
+  --md-accent-fg-color:#306230;--md-accent-fg-color--transparent:#8bac0f;--md-accent-bg-color:#9bbc0f;--md-accent-bg-color--light:#8bac0f;
+  --md-default-bg-color:#9bbc0f;--md-default-bg-color--light:#9bbc0f;--md-default-bg-color--lighter:#9bbc0f;--md-default-bg-color--lightest:#8bac0f;
+  --md-default-fg-color:#0f380f;--md-default-fg-color--light:#0f380f;--md-default-fg-color--lighter:#306230;--md-default-fg-color--lightest:#8bac0f;
+  --md-typeset-color:#0f380f;--md-typeset-a-color:#0f380f;--md-typeset-mark-color:#8bac0f;
+  --md-typeset-table-color:#0f380f;--md-typeset-table-color--light:#8bac0f;--md-typeset-kbd-color:#8bac0f;--md-typeset-kbd-accent-color:#306230;--md-typeset-kbd-border-color:#0f380f;
+  --md-code-bg-color:#0f380f;--md-code-fg-color:#9bbc0f;--md-code-hl-color:#306230;--md-code-hl-color--light:#306230;
+  --md-code-hl-number-color:#8bac0f;--md-code-hl-special-color:#8bac0f;--md-code-hl-function-color:#9bbc0f;--md-code-hl-constant-color:#8bac0f;
+  --md-code-hl-keyword-color:#8bac0f;--md-code-hl-string-color:#8bac0f;--md-code-hl-name-color:#9bbc0f;--md-code-hl-operator-color:#9bbc0f;
+  --md-code-hl-punctuation-color:#9bbc0f;--md-code-hl-comment-color:#8bac0f;--md-code-hl-generic-color:#9bbc0f;--md-code-hl-variable-color:#9bbc0f;
+  --md-footer-fg-color:#9bbc0f;--md-footer-fg-color--light:#9bbc0f;--md-footer-fg-color--lighter:#8bac0f;--md-footer-bg-color:#0f380f;--md-footer-bg-color--dark:#0f380f;
+  --md-admonition-fg-color:#0f380f;--md-admonition-bg-color:#9bbc0f;
+  --md-shadow-z1:none;--md-shadow-z2:none;--md-shadow-z3:none;
+}
+body{-webkit-font-smoothing:none}
+.md-header,.md-tabs{background:#0f380f;color:#9bbc0f;box-shadow:none}
+.md-header__title,.md-nav__title,.md-typeset h1,.md-typeset h2,.md-typeset h3,.md-typeset h4,.md-footer__title{font-family:"Silkscreen",monospace;letter-spacing:0}
+.md-typeset h1{font-weight:700;color:#0f380f;font-size:2em}
+.md-typeset h2{font-weight:400;background:#0f380f;color:#9bbc0f;display:inline-block;padding:0 .4em}
+.md-typeset h3{font-weight:400}
+.md-typeset a{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.md-typeset a:hover{background:#0f380f;color:#9bbc0f;text-decoration:none}
+.md-typeset :not(pre)>code{background:#8bac0f;color:#0f380f;border-radius:0}
+.md-typeset pre>code{border-radius:0}
+.md-typeset .admonition,.md-typeset details{border:4px solid #0f380f;border-radius:0;box-shadow:none;background:#9bbc0f}
+.md-typeset .admonition-title,.md-typeset summary{background:#0f380f!important;color:#9bbc0f;border:0}
+.md-typeset .admonition-title::before,.md-typeset summary::before,.md-typeset summary::after{background-color:#9bbc0f!important}
+.md-typeset table:not([class]){border:4px solid #0f380f;border-radius:0}
+.md-typeset table:not([class]) th{background:#0f380f;color:#9bbc0f}
+.md-typeset table:not([class]) td{border-top:2px solid #0f380f}
+.md-search__form{background:#306230;border-radius:0}
+.md-search__input,.md-search__input::placeholder,.md-search__icon{color:#9bbc0f}
+.md-nav__link--active,.md-nav__link:hover{color:#0f380f;font-weight:700}
+.md-nav__link--active::before{content:"▶ "}
+.md-clipboard{color:#8bac0f}
+.md-top{background:#0f380f;color:#9bbc0f;border-radius:0}
+.md-source__repository,.md-source__icon{color:#9bbc0f}
+.md-header__button.md-logo img{image-rendering:pixelated}
+.md-typeset hr{border-bottom:4px solid #0f380f}
