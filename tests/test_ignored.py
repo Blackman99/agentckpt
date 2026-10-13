@@ -70,7 +70,7 @@ def test_restore_cli_prints_warning(proj: Path, capsys, monkeypatch):
     monkeypatch.chdir(proj)
     snap, _ = S.snap(proj, "base")
     _bump(proj / "conf.local.json", '{"db": "b"}\n')
-    assert main(["restore", snap.id]) == 0
+    assert main(["restore", snap.id, "--force"]) == 0
     err = capsys.readouterr().err
     assert "gitignored file(s) differ" in err and "conf.local.json" in err
 
