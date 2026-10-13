@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Fix:** files larger than `--max-bytes` are now skipped *before* `git add`, so their blobs are never written into `.agentckpt/` (previously a skipped 50 MB file still grew the store by ~53 MB until `prune`/gc). ([#2](https://github.com/Blackman99/agentckpt/issues/2))
+
 ## 0.2.0 — 2026-10-13
 
 - **`agentckpt hook`**: snapshot from agent hooks. Accepts Codex `notify` JSON as the last argument and Claude Code / Codex / Gemini CLI hook JSON on stdin. Resolves the project from the payload `cwd` and derives messages like `claude: before Edit src/app.py` or `codex: turn complete "…"`. Always exits 0 with silent stdout, so it never blocks a prompt or denies a tool call. Skips uninitialized projects unless `--init`. Parallel hooks are serialized via `.agentckpt/hook.lock`

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -168,3 +169,21 @@ def test_cli_ls_json(repo: Path, monkeypatch):
     data = json.loads(proc.stdout)
     assert isinstance(data, list)
     assert data[0]["message"] == "cli"
+
+
+def _objects_bytes(repo: Path) -> int:
+    d = S.git_dir(repo) / "objects"
+    return sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+
+
+def test_skipped_large_file_is_never_written_to_store(repo: Path):
+    """Regression for #2: oversize files must not land in the shadow object store."""
+    S.init_store(repo)
+    (repo / "seed.txt").write_text("seed\n")
+    S.snap(repo, message="base")
+    before = _objects_bytes(repo)
+    (repo / "huge.bin").write_bytes(os.urandom(2 * 1024 * 1024))
+    (repo / "small.txt").write_text("hi\n")
+    _, skipped = S.snap(repo, message="with huge", max_bytes=1024 * 1024)
+    assert "huge.bin" in skipped
+    assert _objects_bytes(repo) - before < 256 * 1024
