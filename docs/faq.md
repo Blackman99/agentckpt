@@ -12,6 +12,8 @@ Stash and WIP commits interact with your index and reflog. Agents often leave un
 
 Respects `.gitignore`. Files over 10 MiB are skipped by default (`--max-bytes`). Still: do not snap directories full of credentials you wouldn't commit.
 
+**What about my `.env` or generated config?** Gitignored files aren't stored, and `restore` never touches them. It does warn when they changed since the snapshot. To capture specific ignored paths, use `include_ignored` in `agentckpt.toml`; secret-looking files need `allow_secrets = true`. See [Configuration](configuration.md#gitignored-files-env-generated-config-build-output).
+
 ## Is `/undo` in Codex / Claude Code enough?
 
 Often not — see [openai/codex#9203](https://github.com/openai/codex/issues/9203) (`/undo` removed, 522👍) and [V2EX threads](https://www.v2ex.com/t/1218209). agentckpt is an external safety net.

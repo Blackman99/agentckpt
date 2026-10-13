@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Gitignored state ([#4](https://github.com/Blackman99/agentckpt/issues/4)):** `snap` now records a metadata-only manifest of gitignored files (path, size, mtime, SHA-256; never contents, and no hash for secret-looking files). `restore` warns about gitignored files that changed, were added or went missing since the snapshot (`ignored_changes` in `--json`). Heavy dirs like `node_modules` / `.venv` are skipped, the scan is capped at 2,000 files, and files are only re-hashed when size or mtime changed
+- **`include_ignored`** in `agentckpt.toml` or `[tool.agentckpt]`: opt-in capture of named gitignored paths, which `restore` then brings back. Secret-looking paths (`.env*`, `*.pem`, `*.key`, `id_*`, `.npmrc`, …) are refused unless `allow_secrets = true`. `--max-bytes` still applies
 - **Fix:** files larger than `--max-bytes` are now skipped *before* `git add`, so their blobs are never written into `.agentckpt/` (previously a skipped 50 MB file still grew the store by ~53 MB until `prune`/gc). ([#2](https://github.com/Blackman99/agentckpt/issues/2))
 
 ## 0.2.0 — 2026-10-13
