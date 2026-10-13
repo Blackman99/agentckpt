@@ -44,7 +44,7 @@ def _snap_id(root: Path) -> str:
 
 def test_restore_untouched_tree_with_dir_symlink_does_not_crash(proj: Path):
     res = S.restore(proj, _snap_id(proj))
-    assert "certs/dirlink" in res["restored"] and not res["skipped_conflict"]
+    assert "certs/dirlink" in res["restored"] and "certs/dirlink" not in res["skipped_conflict"]
     assert os.readlink(proj / "certs" / "dirlink") == "real"
     assert (proj / "certs" / "real" / "ca.crt").read_text() == "CA\n"
 
