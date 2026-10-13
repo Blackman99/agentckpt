@@ -187,3 +187,19 @@ def test_skipped_large_file_is_never_written_to_store(repo: Path):
     _, skipped = S.snap(repo, message="with huge", max_bytes=1024 * 1024)
     assert "huge.bin" in skipped
     assert _objects_bytes(repo) - before < 256 * 1024
+
+
+def test_restore_preserves_exec_bit_and_recreates_dirs(repo: Path):
+    S.init_store(repo)
+    script = repo / "run.sh"
+    script.write_text("#!/bin/sh\n")
+    script.chmod(0o755)
+    snap, _ = S.snap(repo, "x")
+    import shutil
+    shutil.rmtree(repo / "sub")
+    script.unlink()
+    res = S.restore(repo, snap.id)
+    assert (repo / "sub" / "b.txt").read_text() == "beta\n"
+    assert "run.sh" in res["restored"]
+    if os.name != "nt":
+        assert os.stat(script).st_mode & 0o111

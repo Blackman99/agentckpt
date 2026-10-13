@@ -112,6 +112,8 @@ def cmd_restore(args: argparse.Namespace) -> int:
         for p in result["restored"]:
             print(f"  + {p}")
         _print_ignored_changes(result)
+        for p in result.get("skipped_unsupported", []):
+            print(f"  ? symlink not restored (not supported here): {p}", file=sys.stderr)
         if result["skipped_conflict"]:
             print(
                 f"Skipped {len(result['skipped_conflict'])} conflict(s) "
