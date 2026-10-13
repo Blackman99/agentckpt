@@ -398,6 +398,65 @@ def _blob_bytes(root: Path, full_id: str, rel: str) -> bytes:
     return out.stdout
 
 
+def _tree_entries(root: Path, full_id: str, path: Optional[str] = None) -> List[Tuple[str, str, str]]:
+    """(mode, sha, relpath) for every blob/link in a snapshot tree."""
+    out = _run(root, ["ls-tree", "-r", "-z", full_id], check=True)
+    entries: List[Tuple[str, str, str]] = []
+    for rec in (out.stdout or "").split("\0"):
+        if not rec or "\t" not in rec:
+            continue
+        meta, rel = rec.split("\t", 1)
+        mode, typ, sha = meta.split()
+        if typ != "blob":
+            continue  # submodule commits etc.
+        entries.append((mode, sha, rel))
+    if path:
+        p = path.lstrip("./").rstrip("/")
+        entries = [e for e in entries if e[2] == p or e[2].startswith(p + "/")]
+    return entries
+
+
+def _read_blobs(root: Path, shas: Sequence[str]) -> dict:
+    """Read many blobs with one `git cat-file --batch` call."""
+    uniq = list(dict.fromkeys(shas))
+    if not uniq:
+        return {}
+    proc = subprocess.run(
+        [_require_git(), f"--git-dir={git_dir(root)}", "cat-file", "--batch"],
+        input=("\n".join(uniq) + "\n").encode(),
+        capture_output=True,
+        check=True,
+        cwd=str(root),
+        env=_git_env(),
+    )
+    data, pos, blobs = proc.stdout, 0, {}
+    for sha in uniq:
+        nl = data.index(b"\n", pos)
+        header = data[pos:nl].decode().split()
+        if len(header) < 3 or header[1] == "missing":
+            raise AgentckptError(f"Snapshot object {sha} is missing from the store.")
+        size = int(header[2])
+        blobs[sha] = data[nl + 1 : nl + 1 + size]
+        pos = nl + 1 + size + 1
+    return blobs
+
+
+def _path_blocker(root: Path, rel: str) -> Optional[str]:
+    """Reason a path can't be written safely, or None. Never follows the final component."""
+    parts = rel.split("/")
+    cur = root
+    for part in parts[:-1]:
+        cur = cur / part
+        if os.path.islink(cur):
+            return f"parent {cur.relative_to(root).as_posix()} is a symlink"
+        if os.path.lexists(cur) and not cur.is_dir():
+            return f"parent {cur.relative_to(root).as_posix()} is not a directory"
+    dest = root / rel
+    if dest.is_dir() and not os.path.islink(dest):
+        return "a directory is in the way"
+    return None
+
+
 def restore(
     root: Path,
     sid: str,
@@ -406,54 +465,123 @@ def restore(
     force: bool = False,
 ) -> dict:
     """
-    Restore files from a snapshot into the working tree.
-    Never touches the user's real .git index/branches.
-    Conflict = working file exists and content differs from snapshot.
-    Without --force, conflicting files are skipped (reported).
+    Restore files and symlinks from a snapshot into the working tree.
+    Never touches the user's real .git index/branches, and never follows symlinks
+    in the working tree (#6). Symlinks are restored as symlinks.
+
+    Two phases: plan and validate everything, stage temp files next to each
+    destination, then rename them all into place. An error while planning or
+    staging leaves the working tree unchanged.
+
+    Conflict = working path exists and differs from the snapshot (content, link
+    target, or file vs link). Without --force, conflicts are skipped (reported).
+    A real directory in the way is always skipped; it is never deleted.
     """
     snap_obj = resolve_id(root, sid)
-    files = _files_in_tree(root, snap_obj.full_id, path)
+    entries = _tree_entries(root, snap_obj.full_id, path)
+    files = [e[2] for e in entries]
     if path and not files:
         raise AgentckptError(f"Path {path!r} not found in snapshot {snap_obj.id}.")
 
     restored: List[str] = []
     skipped_conflict: List[str] = []
     skipped_protected: List[str] = []
+    skipped_unsupported: List[str] = []
 
+    blobs = _read_blobs(root, [e[1] for e in entries])
     root_resolved = root.resolve()
-    git_resolved = (root / ".git").resolve()
-    store_resolved = store_path(root).resolve()
 
-    for rel in files:
-        if rel == ".git" or rel.startswith(".git/") or rel.startswith(STORE_DIRNAME):
+    # ---- phase 1: plan (no writes)
+    plan: List[Tuple[str, str, bytes]] = []  # (kind, rel, payload)
+    for mode, sha, rel in entries:
+        first = rel.split("/", 1)[0]
+        if first in (".git", STORE_DIRNAME) or ".." in rel.split("/"):
             skipped_protected.append(rel)
             continue
-        dest = (root / rel).resolve()
         try:
-            dest.relative_to(root_resolved)
+            (root / rel).parent.resolve().relative_to(root_resolved)
         except ValueError:
             skipped_protected.append(rel)
             continue
-        # Block writes into .git or .agentckpt
-        for blocked in (git_resolved, store_resolved):
-            try:
-                dest.relative_to(blocked)
-                skipped_protected.append(rel)
-                break
-            except (ValueError, FileNotFoundError):
-                continue
-        else:
-            data = _blob_bytes(root, snap_obj.full_id, rel)
-            if dest.exists() and dest.is_file():
-                current = dest.read_bytes()
-                if current != data and not force:
-                    skipped_conflict.append(rel)
-                    continue
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(data)
-            restored.append(rel)
+        if _path_blocker(root, rel):
+            skipped_conflict.append(rel)
             continue
-        # broke from protected
+        dest = root / rel
+        data = blobs[sha]
+        is_link = mode == "120000"
+        if os.path.islink(dest):
+            same = is_link and os.readlink(dest) == os.fsdecode(data)
+        elif dest.is_file():
+            same = (not is_link) and dest.read_bytes() == data
+        else:
+            same = False
+        if same:
+            restored.append(rel)
+            if not is_link and mode == "100755":
+                plan.append(("chmodx", rel, b""))
+            continue
+        if os.path.lexists(dest) and not force:
+            skipped_conflict.append(rel)
+            continue
+        plan.append(("link" if is_link else ("exec" if mode == "100755" else "file"), rel, data))
+
+    # ---- phase 2a: stage temp files (undo everything on failure)
+    staged: List[Tuple[Path, Path, str]] = []
+    made_dirs: List[Path] = []
+    try:
+        for kind, rel, data in plan:
+            dest = root / rel
+            if kind == "chmodx":
+                continue
+            parent = dest.parent
+            missing = []
+            q = parent
+            while not q.exists():
+                missing.append(q)
+                q = q.parent
+            for d in reversed(missing):
+                d.mkdir()
+                made_dirs.append(d)
+            tmp = parent / f".{dest.name}.agentckpt-tmp-{os.getpid()}"
+            if os.path.lexists(tmp):
+                tmp.unlink()
+            if kind == "link":
+                try:
+                    os.symlink(os.fsdecode(data), tmp)
+                except (OSError, NotImplementedError):
+                    skipped_unsupported.append(rel)
+                    continue
+            else:
+                with open(tmp, "wb") as f:
+                    f.write(data)
+                base = dest.stat().st_mode & 0o7777 if dest.is_file() and not dest.is_symlink() else None
+                if base is not None:
+                    os.chmod(tmp, base)
+                if kind == "exec":
+                    os.chmod(tmp, os.stat(tmp).st_mode | 0o111)
+            staged.append((tmp, dest, rel))
+    except Exception as e:
+        for tmp, _, _ in staged:
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+        for d in reversed(made_dirs):
+            try:
+                d.rmdir()
+            except OSError:
+                pass
+        raise AgentckptError(f"Restore aborted before changing any file: {e}") from e
+
+    # ---- phase 2b: rename into place (os.replace never follows a symlink at dest)
+    for kind, rel, _ in plan:
+        if kind == "chmodx":
+            dest = root / rel
+            os.chmod(dest, dest.stat().st_mode | 0o111)
+    for tmp, dest, rel in staged:
+        os.replace(tmp, dest)
+        restored.append(rel)
+    restored.sort()
 
     ignored_changes = None
     cfg = I.load_config(root)
@@ -469,6 +597,7 @@ def restore(
         "restored": restored,
         "skipped_conflict": skipped_conflict,
         "skipped_protected": skipped_protected,
+        "skipped_unsupported": skipped_unsupported,
     }
 
 
