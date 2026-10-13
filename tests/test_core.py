@@ -203,3 +203,47 @@ def test_restore_preserves_exec_bit_and_recreates_dirs(repo: Path):
     assert "run.sh" in res["restored"]
     if os.name != "nt":
         assert os.stat(script).st_mode & 0o111
+
+
+def test_snapshot_keeps_exact_bytes_despite_eol_attributes(repo: Path):
+    # A user .gitattributes asking for CRLF must not make the shadow store convert
+    # line endings (#8): untouched files would read as conflicts, and --force
+    # restores would rewrite every line ending.
+    (repo / ".gitattributes").write_bytes(b"* text eol=crlf\n")
+    (repo / "crlf.txt").write_bytes(b"one\r\ntwo\r\n")
+    (repo / "lf.txt").write_bytes(b"one\ntwo\n")
+    S.init_store(repo)
+    snap, _ = S.snap(repo, "eol")
+    res = S.restore(repo, snap.id)
+    assert res["skipped_conflict"] == []
+    (repo / "crlf.txt").unlink()
+    (repo / "lf.txt").unlink()
+    S.restore(repo, snap.id)
+    assert (repo / "crlf.txt").read_bytes() == b"one\r\ntwo\r\n"
+    assert (repo / "lf.txt").read_bytes() == b"one\ntwo\n"
+
+
+def test_snapshot_ignores_autocrlf(repo: Path, monkeypatch):
+    # Git for Windows ships core.autocrlf=true; simulate it on every platform.
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "core.autocrlf")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", "true")
+    (repo / "win.txt").write_bytes(b"x\r\ny\r\n")
+    S.init_store(repo)
+    snap, _ = S.snap(repo, "autocrlf")
+    assert S.restore(repo, snap.id)["skipped_conflict"] == []
+    (repo / "win.txt").unlink()
+    S.restore(repo, snap.id)
+    assert (repo / "win.txt").read_bytes() == b"x\r\ny\r\n"
+
+
+@pytest.mark.parametrize("arg", [".github", "./.github", ".github/", "/.github/ci.yml"])
+def test_restore_path_keeps_leading_dot(repo: Path, arg: str):
+    (repo / ".github").mkdir()
+    (repo / ".github" / "ci.yml").write_text("on: push\n", encoding="utf-8")
+    S.init_store(repo)
+    snap, _ = S.snap(repo, "dotdir")
+    (repo / ".github" / "ci.yml").unlink()
+    res = S.restore(repo, snap.id, path=arg)
+    assert res["restored"] == [".github/ci.yml"]
+    assert (repo / ".github" / "ci.yml").read_text(encoding="utf-8") == "on: push\n"
