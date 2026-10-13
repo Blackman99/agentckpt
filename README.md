@@ -29,4 +29,23 @@ agentckpt restore <id> --force    # overwrite divergent files; omit --force to s
 
 Auto-snap while an agent works: `agentckpt watch`. Housekeeping: `agentckpt prune --keep 50`, `agentckpt doctor`.
 
+## Agent hooks
+
+Let the agent checkpoint before each prompt, before each edit or shell command, and after each turn. Every config calls `agentckpt hook`, which reads the hook JSON (last argument or stdin), finds the project from its `cwd`, and snaps with a message like `claude: before Edit src/app.py`. It always exits 0 and prints nothing on stdout, so it never blocks a prompt or denies a tool call.
+
+```toml
+# ~/.codex/config.toml — after every Codex turn
+notify = ["agentckpt", "hook", "--source", "codex"]
+```
+
+```jsonc
+// .claude/settings.json — before every prompt and every edit / shell command
+{ "hooks": {
+  "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "agentckpt hook --source claude" }] }],
+  "PreToolUse": [{ "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+                   "hooks": [{ "type": "command", "command": "agentckpt hook --source claude" }] }] } }
+```
+
+Drop-in configs for Codex (`notify` + `hooks.json`), Claude Code, Gemini CLI and an OpenCode plugin are in [`examples/`](examples/). Anything else: `agentckpt run -- aider`. Projects without `agentckpt init` are skipped. See the [hooks guide](https://blackman99.github.io/agentckpt/docs/hooks/).
+
 **Docs:** [blackman99.github.io/agentckpt/docs](https://blackman99.github.io/agentckpt/docs/) · **Blog:** [English](https://blackman99.github.io/agentckpt/docs/blog/agent-undo-without-touching-git/) · [中文](https://blackman99.github.io/agentckpt/docs/blog/agent-undo-without-touching-git-zh/) · MIT

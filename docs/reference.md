@@ -32,6 +32,14 @@ Keep the newest N snapshots (default 50); rewrite the shadow history to drop old
 
 Sanity-check store, gitignore, and git on PATH. Exit `1` on issues.
 
+## `agentckpt hook [payload] [--source NAME] [--event E] [-m MSG] [--root P] [--init] [--no-stdin] [--max-bytes N] [--json] [-q]`
+
+Snapshot from an agent hook. Reads hook JSON from the last argument (Codex `notify`) or stdin (Claude Code / Codex / Gemini CLI hooks), resolves the project from the payload `cwd`, and derives the message from the event. Skips projects that were never initialized unless `--init`. **Always exits `0`** and prints nothing on stdout unless `--json`, so it never blocks or denies anything. See [Agent hooks](hooks.md).
+
+## `agentckpt run [--init] [-m LABEL] [--root P] [-q] -- <command> [args...]`
+
+Snap, run the command, snap again (`run: before …` / `run: after … (exit N)`). Exits with the command's exit code (`127` if not found).
+
 ## `agentckpt demo`
 
 Self-contained temp-dir exercise for CI and README. Exit `0` on success.

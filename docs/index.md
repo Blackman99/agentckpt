@@ -17,6 +17,7 @@ agentckpt restore <id> --force
 
 - [Install](install.md)
 - [Usage](usage.md)
+- [Agent hooks](hooks.md): Codex, Claude Code, Gemini CLI, OpenCode
 - [Command reference](reference.md)
 - [FAQ](faq.md)
 - [Blog](blog/index.md): [English intro](blog/agent-undo-without-touching-git.md) · [中文介绍](blog/agent-undo-without-touching-git-zh.md)

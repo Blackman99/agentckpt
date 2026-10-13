@@ -28,6 +28,7 @@ nav:
   - Overview: index.md
   - Install: install.md
   - Usage: usage.md
+  - Agent hooks: hooks.md
   - Configuration: configuration.md
   - Command reference: reference.md
   - FAQ: faq.md

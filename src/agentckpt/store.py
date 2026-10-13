@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
@@ -14,6 +15,8 @@ GIT_DIRNAME = "git"
 DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10 MiB
 DEFAULT_KEEP = 50
 EXCLUDE_ALWAYS = [".agentckpt/", ".agentckpt", ".git/"]
+HOOK_LOCK_NAME = "hook.lock"  # transient; held by `agentckpt hook` while it snaps
+HOOK_LOCK_STALE_S = 120.0
 
 
 class AgentckptError(Exception):
@@ -61,6 +64,34 @@ def _require_git() -> str:
     return path
 
 
+# Variables that would point git at a *different* repo or index than the shadow store.
+# Hooks often run inside agent or git environments that export these; inheriting
+# GIT_INDEX_FILE in particular would make the shadow `git add -A` write the user's index.
+_GIT_ENV_SCRUB = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_COMMON_DIR",
+    "GIT_NAMESPACE",
+    "GIT_PREFIX",
+)
+
+
+def _git_env(extra: Optional[dict] = None) -> dict:
+    env = os.environ.copy()
+    for k in _GIT_ENV_SCRUB:
+        env.pop(k, None)
+    env.setdefault("GIT_AUTHOR_NAME", "agentckpt")
+    env.setdefault("GIT_AUTHOR_EMAIL", "agentckpt@local")
+    env.setdefault("GIT_COMMITTER_NAME", "agentckpt")
+    env.setdefault("GIT_COMMITTER_EMAIL", "agentckpt@local")
+    if extra:
+        env.update(extra)
+    return env
+
+
 def _run(
     root: Path,
     args: Sequence[str],
@@ -71,13 +102,7 @@ def _run(
 ) -> subprocess.CompletedProcess:
     git = _require_git()
     cmd = [git, f"--git-dir={git_dir(root)}", f"--work-tree={root}", *args]
-    env = os.environ.copy()
-    env.setdefault("GIT_AUTHOR_NAME", "agentckpt")
-    env.setdefault("GIT_AUTHOR_EMAIL", "agentckpt@local")
-    env.setdefault("GIT_COMMITTER_NAME", "agentckpt")
-    env.setdefault("GIT_COMMITTER_EMAIL", "agentckpt@local")
-    if env_extra:
-        env.update(env_extra)
+    env = _git_env(env_extra)
     try:
         return subprocess.run(
             cmd,
@@ -135,6 +160,7 @@ def init_store(root: Path) -> Tuple[Path, bool]:
             check=True,
             capture_output=True,
             text=True,
+            env=_git_env(),
         )
         _run(root, ["config", "user.name", "agentckpt"])
         _run(root, ["config", "user.email", "agentckpt@local"])
@@ -308,6 +334,7 @@ def _blob_bytes(root: Path, full_id: str, rel: str) -> bytes:
         check=True,
         capture_output=True,
         cwd=str(root),
+        env=_git_env(),
     )
     return out.stdout
 
@@ -457,6 +484,14 @@ def doctor(root: Path) -> dict:
         )
     if not report["gitignore_ok"]:
         report["issues"].append(".agentckpt/ is not listed in .gitignore")
+    lock = store_path(root) / HOOK_LOCK_NAME
+    try:
+        if lock.exists() and time.time() - lock.stat().st_mtime > HOOK_LOCK_STALE_S:
+            report["issues"].append(
+                f"stale hook lock {lock} (a crashed `agentckpt hook`?); safe to delete"
+            )
+    except OSError:
+        pass
     if report["initialized"]:
         try:
             snaps = list_snapshots(root)

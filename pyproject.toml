@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentckpt"
-version = "0.1.0"
+version = "0.2.0"
 description = "Checkpoint a working tree while coding agents run, and restore any snapshot without touching your git branches or index."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -40,7 +40,7 @@ agentckpt = "agentckpt.cli:main"
 packages = ["src/agentckpt"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "README.md", "LICENSE", "pyproject.toml"]
+include = ["src", "tests", "examples", "README.md", "LICENSE", "pyproject.toml", "CHANGELOG.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
