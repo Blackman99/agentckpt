@@ -43,12 +43,12 @@ The package is pure Python 3.9+ with zero runtime dependencies; the only require
 
 ## Install
 
-agentckpt **is not on PyPI yet**. v0.1.0 is published on [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.1.0) as a wheel and sdist. Install the wheel directly:
+agentckpt **is not on PyPI yet**. v0.2.0 is published on [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.2.0) as a wheel and sdist. Install the wheel directly:
 
 ```bash
-pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.1.0/agentckpt-0.1.0-py3-none-any.whl
+pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.2.0/agentckpt-0.2.0-py3-none-any.whl
 # or: pip install <same URL>
-agentckpt --version   # agentckpt 0.1.0
+agentckpt --version   # agentckpt 0.2.0
 ```
 
 Or try it without installing, straight from the repo:
@@ -96,13 +96,13 @@ The deleted untracked file comes back, and `git log` in the real repo is unchang
 
 For longer sessions, leave `agentckpt watch` running in another terminal (`--debounce 800` is the default poll interval in ms). Keep the store small with `agentckpt prune --keep 50`.
 
-## Limits (v0.1.0)
+## Limits (v0.2.0)
 
 Being honest about what it does *not* do:
 
 - **Restore doesn't delete files.** It writes back what the snapshot has. Files the agent *created* after the snapshot stay on disk. Use `agentckpt diff <id>` to see them and remove them yourself.
 - **Only what the snapshot saw.** Files matched by `.gitignore` and files over 10 MiB (change with `--max-bytes`) aren't stored. That's deliberate (no `node_modules`, no build output), but it means those can't be restored.
-- **`watch` is polling, not hooks.** It snapshots when it notices a change, which may be mid-edit. A manual `snap` right before each agent turn is the cleanest restore point. Drop-in hooks for Codex, Claude Code, OpenCode and Gemini CLI are on the [roadmap](https://github.com/Blackman99/agentckpt/blob/main/ROADMAP.md) for v0.2.
+- **`watch` is polling.** It snapshots when it notices a change, which may be mid-edit. Since v0.2.0, `agentckpt hook` snaps at clean turn boundaries for Codex, Claude Code, Gemini CLI and OpenCode, and `agentckpt run -- <agent>` wraps agents without hooks. See the [hooks docs](https://blackman99.github.io/agentckpt/docs/hooks/).
 - **The store lives inside the project.** `.agentckpt/` is gitignored, so something like `git clean -fdx` (or deleting the project directory) removes your snapshots too. It is an undo buffer, not a backup.
 - **`.gitignore` gets one line.** `init` appends `.agentckpt/` to it. That's the only change to files you own, and it's there so the store never gets committed.
 - **No selective/interactive restore UX, no quotas, no MCP server yet.** Those are v0.3 and v0.4 on the roadmap. PyPI and a frozen JSON schema are planned for v1.0.

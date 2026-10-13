@@ -43,12 +43,12 @@ git --git-dir=.agentckpt/git --work-tree=<项目根目录> ...
 
 ## 安装
 
-agentckpt **目前还没有发布到 PyPI**。v0.1.0 的 wheel 和 sdist 放在 [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.1.0) 上，可以直接装 wheel：
+agentckpt **目前还没有发布到 PyPI**。v0.2.0 的 wheel 和 sdist 放在 [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.2.0) 上，可以直接装 wheel：
 
 ```bash
-pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.1.0/agentckpt-0.1.0-py3-none-any.whl
+pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.2.0/agentckpt-0.2.0-py3-none-any.whl
 # 或者：pip install <同一个链接>
-agentckpt --version   # agentckpt 0.1.0
+agentckpt --version   # agentckpt 0.2.0
 ```
 
 不想装的话，也可以直接从仓库跑：
@@ -96,13 +96,13 @@ Restored 3 file(s) from b66469f
 
 跑得比较久的任务，可以在另一个终端开着 `agentckpt watch`（`--debounce` 默认 800 毫秒轮询一次）。快照多了用 `agentckpt prune --keep 50` 清一清。
 
-## 目前的局限（v0.1.0）
+## 目前的局限（v0.2.0）
 
 有些事它现在不做，先说清楚：
 
 - **恢复不会删文件。** 它只把快照里有的写回去。快照之后智能体**新建**的文件还会留在磁盘上，可以用 `agentckpt diff <id>` 找出来自己删。
 - **快照里没有的，恢复不了。** 被 `.gitignore` 忽略的文件、超过 10 MiB 的文件（可用 `--max-bytes` 调整）都不会存。这是故意的（不想把 `node_modules`、构建产物塞进去），但也意味着它们没法恢复。
-- **`watch` 是轮询，不是钩子。** 它在发现变化时拍快照，可能正好拍到写了一半的状态。最干净的恢复点还是每轮开始前手动 `snap` 一次。给 Codex、Claude Code、OpenCode、Gemini CLI 用的钩子配置在 [路线图](https://github.com/Blackman99/agentckpt/blob/main/ROADMAP.md) 的 v0.2 里。
+- **`watch` 是轮询。** 它在发现变化时拍快照，可能正好拍到写了一半的状态。从 v0.2.0 起，`agentckpt hook` 可以在 Codex、Claude Code、Gemini CLI、OpenCode 每轮的干净边界自动快照，没有钩子的 agent 可以用 `agentckpt run -- <agent>` 包一层。详见 [Hooks 文档](https://blackman99.github.io/agentckpt/docs/hooks/)。
 - **快照存在项目目录里。** `.agentckpt/` 是被 gitignore 的，所以 `git clean -fdx` 这类命令（或者直接删掉项目目录）会把快照一起清掉。它是撤销缓冲，不是备份。
 - **会改一行 `.gitignore`。** `init` 会追加 `.agentckpt/`。这是它对你的文件唯一的改动，目的是防止影子仓库被误提交。
 - **还没有交互式/选择性恢复界面、存储配额和 MCP 服务。** 这些分别排在路线图的 v0.3 和 v0.4；发布到 PyPI、冻结 JSON 格式计划在 v1.0。
