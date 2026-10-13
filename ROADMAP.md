@@ -7,11 +7,11 @@
 - Never touches the user's real git index or branches
 - Stdlib-only polling watch, `--json` where useful, exit codes for scripting
 
-## v0.2 — Agent hooks
+## v0.2.0 — Agent hooks ✅
 
-- Drop-in snippets for Codex `notify`, Claude Code hooks, OpenCode, Gemini CLI
-- Optional pre-turn / post-turn auto-snap helpers
-- Example configs in `examples/`
+- `agentckpt hook`: one adapter for Codex `notify` (argv JSON) and Claude Code / Codex / Gemini CLI lifecycle hooks (stdin JSON). Always exits 0, never denies
+- Pre-turn / post-turn / pre-edit auto-snap via `UserPromptSubmit`, `PreToolUse`, `Stop` (and Gemini equivalents); `agentckpt run -- <agent>` wrapper for agents without hooks
+- Drop-in configs in `examples/` for Codex, Claude Code, Gemini CLI, an OpenCode plugin, and shell wrappers
 
 ## v0.3 — Selective restore & quotas
 

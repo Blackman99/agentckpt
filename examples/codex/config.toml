@@ -1,0 +1,6 @@
+# ~/.codex/config.toml  (user-level: Codex ignores `notify` in a project .codex/config.toml)
+#
+# Post-turn checkpoint: Codex runs this after every agent turn and appends the
+# agent-turn-complete JSON (with the session `cwd`) as the last argument.
+# Projects where you never ran `agentckpt init` are skipped; add "--init" to opt every project in.
+notify = ["agentckpt", "hook", "--source", "codex"]

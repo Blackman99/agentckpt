@@ -26,6 +26,10 @@ agentckpt watch --debounce 800
 
 Stdlib polling (no watchdog required). Takes a snapshot whenever the tree fingerprint changes.
 
+## Let the agent snap for you
+
+Wire `agentckpt hook` into Codex, Claude Code, Gemini CLI or OpenCode so every prompt, edit and turn gets a checkpoint, or wrap any CLI with `agentckpt run -- <agent>`. See [Agent hooks](hooks.md).
+
 ## List and inspect
 
 ```bash

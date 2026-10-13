@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -11,6 +13,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from agentckpt import __version__
+from agentckpt import hooks as H
 from agentckpt import store as S
 
 
@@ -187,6 +190,83 @@ def cmd_watch(args: argparse.Namespace) -> int:
         return 0
 
 
+def _hook_summary(result: dict) -> str:
+    snap = result.get("snapshot") or {}
+    if result.get("ok") and result.get("created"):
+        return f"agentckpt: snap {snap.get('id')}  {snap.get('file_count')} files  {result['message']}"
+    if result.get("ok"):
+        return f"agentckpt: {result.get('skipped')} (tip {snap.get('id')})"
+    return f"agentckpt: skipped: {result.get('skipped')}"
+
+
+def cmd_hook(args: argparse.Namespace) -> int:
+    """Snapshot from an agent hook. Always exits 0 and keeps stdout silent unless --json.
+
+    Agents read hook stdout (Claude Code / Codex add plain stdout on UserPromptSubmit to the
+    model context; Gemini CLI parses it as JSON) and treat exit 2 as "block", so the only
+    safe contract is: no stdout, exit 0, never a deny decision.
+    """
+    try:
+        if args.no_stdin:
+            payload = H.parse_payload(args.payload) if args.payload else None
+        else:
+            payload, _ = H.payload_from_inputs(args.payload, sys.stdin)
+        result = H.run_hook(
+            payload=payload,
+            source=args.source,
+            event=args.event,
+            message=args.message or None,
+            root=args.root,
+            auto_init=args.auto_init,
+            max_bytes=args.max_bytes,
+        )
+        if args.json:
+            _out_json(result)
+        elif not args.quiet:
+            print(_hook_summary(result), file=sys.stderr)
+    except Exception as e:  # noqa: BLE001 - never break the calling agent
+        try:
+            print(f"agentckpt: hook error ignored: {e}", file=sys.stderr)
+        except Exception:  # noqa: BLE001
+            pass
+    return 0
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    """Snap, run a command (e.g. an agent CLI), snap again. Returns the command's exit code."""
+    cmd = list(args.command or [])
+    if cmd and cmd[0] == "--":
+        cmd = cmd[1:]
+    if not cmd:
+        _err("usage: agentckpt run [--init] [-m LABEL] -- <command> [args...]")
+        return 2
+    label = args.message or H._one_line(" ".join(cmd), 60)
+    root = str(Path(args.root).resolve()) if args.root else str(S.find_root())
+
+    def _snap(phase: str, suffix: str = "") -> None:
+        res = H.run_hook(
+            payload=None,
+            source="run",
+            message=f"run: {phase} {label}{suffix}",
+            root=root,
+            auto_init=args.auto_init,
+        )
+        if not args.quiet:
+            print(_hook_summary(res), file=sys.stderr)
+
+    _snap("before")
+    exe = shutil.which(cmd[0]) or cmd[0]
+    try:
+        code = subprocess.call([exe, *cmd[1:]])
+    except FileNotFoundError:
+        _err(f"command not found: {cmd[0]}")
+        code = 127
+    except KeyboardInterrupt:
+        code = 130
+    _snap("after", f" (exit {code})")
+    return code
+
+
 def cmd_demo(args: argparse.Namespace) -> int:
     """Self-contained demo for CI and README — temp dir, snap, modify, restore."""
     with tempfile.TemporaryDirectory(prefix="agentckpt-demo-") as td:
@@ -312,14 +392,84 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sp.set_defaults(func=cmd_watch)
 
+    sp = sub.add_parser(
+        "hook",
+        help="Snap from an agent hook (Codex notify / Claude Code / Codex / Gemini). Exits 0",
+        description=(
+            "Take a snapshot from an agent hook. Reads the hook JSON from the last argument "
+            "(Codex `notify`) or from stdin (Claude Code, Codex and Gemini CLI hooks), resolves "
+            "the project from the payload `cwd`, and writes a message such as "
+            "'claude: before Edit src/app.py'. Always exits 0, prints nothing on stdout "
+            "unless --json, and never blocks or denies a tool call."
+        ),
+    )
+    sp.add_argument(
+        "payload",
+        nargs="?",
+        help="Hook JSON (Codex notify appends it as the last argument); default: read stdin",
+    )
+    sp.add_argument("--source", help="Agent label for the message: codex, claude, gemini, opencode...")
+    sp.add_argument("--event", help="Override the event name (e.g. PreToolUse, Stop)")
+    sp.add_argument("-m", "--message", default="", help="Use this snapshot message verbatim")
+    sp.add_argument("--root", help="Project root (default: payload cwd, then walk up from cwd)")
+    sp.add_argument(
+        "--init",
+        dest="auto_init",
+        action="store_true",
+        help="Create .agentckpt/ if missing (default: skip projects that were never init'ed)",
+    )
+    sp.add_argument("--no-stdin", action="store_true", help="Do not read the payload from stdin")
+    sp.add_argument(
+        "--max-bytes",
+        type=int,
+        default=S.DEFAULT_MAX_BYTES,
+        help=f"Skip files larger than this (default {S.DEFAULT_MAX_BYTES})",
+    )
+    sp.add_argument(
+        "--json",
+        action="store_true",
+        help="Print the result as JSON on stdout (scripts only; not inside agent hook configs)",
+    )
+    sp.add_argument("-q", "--quiet", action="store_true", help="No stderr summary")
+    sp.set_defaults(func=cmd_hook)
+
+    sp = sub.add_parser(
+        "run",
+        help="Snap before and after running a command, e.g. `agentckpt run -- aider`",
+    )
+    sp.add_argument("--init", dest="auto_init", action="store_true", help="Create store if missing")
+    sp.add_argument("-m", "--message", default="", help="Label for the snaps (default: command)")
+    sp.add_argument("--root", help="Project root (default: walk up from cwd)")
+    sp.add_argument("-q", "--quiet", action="store_true", help="No stderr summary")
+    sp.add_argument("command", nargs=argparse.REMAINDER, help="-- command [args...]")
+    sp.set_defaults(func=cmd_run)
+
     sp = sub.add_parser("demo", help="Run a self-contained snap/restore demo (for CI)")
     sp.set_defaults(func=cmd_demo)
 
     return p
 
 
+def _is_hook_call(argv: List[str]) -> bool:
+    for a in argv:
+        if a.startswith("-"):
+            continue
+        return a == "hook"
+    return False
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if _is_hook_call(argv):
+        # A hook must never exit 2 (agents read that as "block"); tolerate unknown flags too.
+        try:
+            args, extra = parser.parse_known_args(argv)
+        except SystemExit:
+            return 0  # --help exits 0; bad flags must not become exit 2
+        if extra:
+            print(f"agentckpt: ignoring unknown hook arguments: {extra}", file=sys.stderr)
+        return cmd_hook(args)
     args = parser.parse_args(argv)
     try:
         return int(args.func(args))

@@ -1,0 +1,46 @@
+{
+  "hooks": {
+    "BeforeAgent": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "agentckpt-before-prompt",
+            "type": "command",
+            "command": "agentckpt hook --source gemini --quiet",
+            "timeout": 30000,
+            "description": "Checkpoint the working tree before each prompt"
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "matcher": "write_file|replace|run_shell_command",
+        "hooks": [
+          {
+            "name": "agentckpt-before-tool",
+            "type": "command",
+            "command": "agentckpt hook --source gemini --quiet",
+            "timeout": 30000,
+            "description": "Checkpoint the working tree before file edits and shell commands"
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "agentckpt-turn-end",
+            "type": "command",
+            "command": "agentckpt hook --source gemini --quiet",
+            "timeout": 30000,
+            "description": "Checkpoint the working tree after each turn"
+          }
+        ]
+      }
+    ]
+  }
+}

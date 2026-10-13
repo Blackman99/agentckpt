@@ -1,0 +1,30 @@
+{
+  "description": "agentckpt: checkpoint the working tree before each prompt and before edits / shell commands",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agentckpt hook --source codex",
+            "timeout": 30,
+            "statusMessage": "agentckpt: checkpoint"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(apply_patch|Bash)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agentckpt hook --source codex",
+            "timeout": 30,
+            "statusMessage": "agentckpt: checkpoint"
+          }
+        ]
+      }
+    ]
+  }
+}
