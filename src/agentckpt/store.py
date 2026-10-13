@@ -202,6 +202,25 @@ def current_tip(root: Path) -> Optional[Snapshot]:
     return s
 
 
+def _oversize_candidates(root: Path, max_bytes: int) -> List[str]:
+    """Untracked or modified (non-ignored) paths larger than max_bytes, found before staging."""
+    out = _run(root, ["ls-files", "-z", "-o", "-m", "--exclude-standard"], check=True)
+    found: List[str] = []
+    for part in sorted(set((out.stdout or "").split("\0"))):
+        if not part:
+            continue
+        fp = root / part
+        try:
+            if fp.is_file() and not fp.is_symlink() and fp.stat().st_size > max_bytes:
+                found.append(part)
+        except OSError:
+            continue
+    if found:
+        # Drop any older (smaller) copy from the index so the snapshot doesn't keep a stale version.
+        _run(root, ["rm", "--cached", "-q", "--ignore-unmatch", "--", *found], check=False)
+    return found
+
+
 def _unstaged_large(root: Path, max_bytes: int) -> List[str]:
     """After git add -A, remove files larger than max_bytes from the index."""
     skipped: List[str] = []
@@ -231,8 +250,13 @@ def snap(
     _write_info_exclude(root)
     ensure_gitignore(root)
 
-    _run(root, ["add", "-A"], check=True)
-    skipped = _unstaged_large(root, max_bytes)
+    oversize = _oversize_candidates(root, max_bytes)
+    add_args = ["add", "-A"]
+    if oversize:
+        # Exclude oversize paths up front so `git add` never writes their blobs (#2).
+        add_args += ["--", "."] + [f":(exclude,literal){p}" for p in oversize]
+    _run(root, add_args, check=True)
+    skipped = sorted(set(oversize) | set(_unstaged_large(root, max_bytes)))
 
     cached = _run(root, ["diff", "--cached", "--name-only"], check=True)
     if not (cached.stdout or "").strip():
