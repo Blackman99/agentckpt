@@ -39,7 +39,7 @@ nav:
   - Home page ↗: https://blackman99.github.io/agentckpt/
 
 extra_css:
-  - stylesheets/dmg.css
+  - stylesheets/rx.css
 
 markdown_extensions:
   - admonition

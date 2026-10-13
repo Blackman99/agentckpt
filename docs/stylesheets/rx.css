@@ -1,0 +1,40 @@
+/* agentckpt docs: pill organizer theme (matches site/DESIGN.md). Pharmacy pink, indigo ink, capsule accents. */
+@font-face{font-family:"Archivo X";src:url(../assets/fonts/archivo-x800.woff2) format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Lexend";src:url(../assets/fonts/lexend-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Lexend";src:url(../assets/fonts/lexend-600.woff2) format("woff2");font-weight:500 700;font-display:swap}
+@font-face{font-family:"Victor Mono";src:url(../assets/fonts/victormono-400.woff2) format("woff2");font-weight:400;font-display:swap}
+:root,[data-md-color-scheme=default]{
+  --md-text-font-family:"Lexend",sans-serif;--md-code-font-family:"Victor Mono",monospace;
+  --md-primary-fg-color:#1d2b6b;--md-primary-fg-color--light:#1d2b6b;--md-primary-fg-color--dark:#1d2b6b;
+  --md-primary-bg-color:#fffafc;--md-primary-bg-color--light:#fffafc;
+  --md-accent-fg-color:#1d2b6b;--md-accent-fg-color--transparent:#f7c8d8;--md-accent-bg-color:#fffafc;--md-accent-bg-color--light:#fffafc;
+  --md-default-bg-color:#f7c8d8;--md-default-fg-color:#1d2b6b;--md-default-fg-color--light:#1d2b6b;--md-default-fg-color--lighter:#1d2b6b;--md-default-fg-color--lightest:#ef7aa1;
+  --md-typeset-color:#1d2b6b;--md-typeset-a-color:#1d2b6b;--md-typeset-mark-color:#9fe3cf;
+  --md-code-bg-color:#1d2b6b;--md-code-fg-color:#fffafc;--md-code-hl-color:#ef7aa1;
+  --md-code-hl-number-color:#9fe3cf;--md-code-hl-special-color:#ef7aa1;--md-code-hl-function-color:#fffafc;--md-code-hl-constant-color:#9fe3cf;
+  --md-code-hl-keyword-color:#ef7aa1;--md-code-hl-string-color:#9fe3cf;--md-code-hl-name-color:#fffafc;--md-code-hl-operator-color:#fffafc;
+  --md-code-hl-punctuation-color:#fffafc;--md-code-hl-comment-color:#f7c8d8;--md-code-hl-generic-color:#fffafc;--md-code-hl-variable-color:#fffafc;
+  --md-footer-fg-color:#fffafc;--md-footer-bg-color:#1d2b6b;--md-footer-bg-color--dark:#1d2b6b;
+  --md-admonition-fg-color:#1d2b6b;--md-admonition-bg-color:#fffafc;
+  --md-shadow-z1:none;--md-shadow-z2:none;--md-shadow-z3:none;
+}
+.md-header,.md-tabs{background:#1d2b6b;color:#fffafc;box-shadow:none}
+.md-header__title,.md-typeset h1,.md-typeset h2,.md-typeset h3{font-family:"Archivo X",sans-serif;font-weight:800;letter-spacing:-.01em}
+.md-typeset h1{color:#1d2b6b;font-size:2.1em}
+.md-main__inner{margin-top:1.2rem}
+.md-content__inner{background:#fffafc;border-radius:24px;padding:.6rem 1.4rem 1.4rem}
+.md-content__inner:before{display:none}
+.md-typeset a{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.md-typeset a:hover{text-decoration-color:#ef7aa1}
+.md-typeset :not(pre)>code{background:#f7c8d8;color:#1d2b6b;border-radius:6px}
+.md-typeset pre>code{border-radius:14px}
+.md-typeset .admonition,.md-typeset details{border:3px solid #1d2b6b;border-radius:16px;box-shadow:none}
+.md-typeset .admonition-title,.md-typeset summary{background:#9fe3cf!important;color:#1d2b6b}
+.md-typeset .admonition-title::before,.md-typeset summary::before{background-color:#1d2b6b!important}
+.md-typeset table:not([class]){border:3px solid #1d2b6b;border-radius:12px}
+.md-typeset table:not([class]) th{background:#1d2b6b;color:#fffafc}
+.md-search__form{background:#fffafc;border-radius:999px}
+.md-search__input,.md-search__input::placeholder,.md-search__icon{color:#1d2b6b}
+.md-nav__link--active{font-weight:700}
+.md-nav__link--active::before{content:"";display:inline-block;width:18px;height:8px;margin-right:6px;border-radius:999px;background:#ef7aa1;border-left:9px solid #1d2b6b;box-sizing:border-box;vertical-align:1px}
+.md-top{background:#1d2b6b;color:#fffafc}
