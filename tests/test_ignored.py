@@ -201,3 +201,21 @@ def test_prune_keeps_manifests(proj: Path):
     for s in snaps:
         assert I.read_manifest(S.store_path(proj), s.full_id) is not None
     assert len(list(I.manifest_dir(S.store_path(proj)).glob("*.json"))) == 2
+
+
+def test_mini_toml_multiline_array_with_bracket_glob():
+    data = I._mini_toml(
+        '[tool.agentckpt]\ninclude_ignored = [\n  "gen/[ab]*.json",  # c\n  "build/",\n]\n'
+        "allow_secrets = false\n"
+    )
+    assert data["tool"]["agentckpt"]["include_ignored"] == ["gen/[ab]*.json", "build/"]
+    assert data["tool"]["agentckpt"]["allow_secrets"] is False
+
+
+def test_secret_files_are_not_hashed_in_manifest(proj: Path):
+    (proj / ".env").write_text("TOKEN=abc\n", encoding="utf-8")
+    (proj / "conf.local.json").write_text("{}\n", encoding="utf-8")
+    snap, _ = S.snap(proj, message="m")
+    m = I.read_manifest(S.store_path(proj), snap.full_id)
+    assert m["files"][".env"]["sha256"] is None
+    assert m["files"]["conf.local.json"]["sha256"]

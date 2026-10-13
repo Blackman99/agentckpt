@@ -71,7 +71,7 @@ def _mini_toml(text: str) -> dict:
         line = _strip_comment(raw).strip()
         if key is not None:
             buf += " " + line
-            if "]" in line:
+            if "]" in _STR.sub("", line):
                 cur[key] = _mini_value(buf)
                 key = None
             continue
@@ -86,7 +86,7 @@ def _mini_toml(text: str) -> dict:
         if not m:
             continue
         k, v = m.group(1), m.group(2).strip()
-        if v.startswith("[") and "]" not in v:
+        if v.startswith("[") and "]" not in _STR.sub("", v):
             key, buf = k, v
             continue
         cur[k] = _mini_value(v)
@@ -211,7 +211,8 @@ def scan(root: Path, run, cfg: Config, previous: Optional[dict] = None, max_hash
     """Manifest of ignored files: {path: {size, mtime_ns, sha256}} (metadata only).
 
     Hashing is lazy: if size+mtime match ``previous``, its hash is reused. Files larger
-    than ``max_hash_bytes`` (when > 0) are compared by size+mtime only.
+    than ``max_hash_bytes`` (when > 0) and secret-looking files are compared by
+    size+mtime only.
     """
     prev_files = (previous or {}).get("files", {})
     files, truncated = _walk_files(
@@ -228,7 +229,11 @@ def scan(root: Path, run, cfg: Config, previous: Optional[dict] = None, max_hash
             continue
         entry = {"size": st.st_size, "mtime_ns": st.st_mtime_ns, "sha256": None}
         old = prev_files.get(rel)
-        if old and old.get("size") == st.st_size and old.get("mtime_ns") == st.st_mtime_ns:
+        if is_secret_path(rel):
+            # No hash for credential-looking files: a digest of a short .env can be
+            # brute-forced. They are compared by size + mtime only.
+            pass
+        elif old and old.get("size") == st.st_size and old.get("mtime_ns") == st.st_mtime_ns:
             entry["sha256"] = old.get("sha256")
         elif not max_hash_bytes or st.st_size <= max_hash_bytes:
             try:

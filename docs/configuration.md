@@ -21,7 +21,8 @@ Gitignored files are **never stored by default**, and `restore` never writes or 
 Your local `.env` is left alone. What agentckpt does instead:
 
 - **Manifest (on by default).** Every `snap` records metadata for each gitignored file: path,
-  size, mtime and a SHA-256. It never records contents. The manifest lives in
+  size, mtime and a SHA-256. It never records contents, and secret-looking files (see the list
+  below) get no hash at all, only size and mtime. The manifest lives in
   `.agentckpt/manifests/<snapshot>.json`.
 - **Restore warning.** `agentckpt restore` compares the snapshot's manifest with the working tree
   and warns on stderr about gitignored files that changed, were added or went missing since that
