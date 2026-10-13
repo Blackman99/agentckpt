@@ -39,16 +39,26 @@ def cmd_init(args: argparse.Namespace) -> int:
 def cmd_snap(args: argparse.Namespace) -> int:
     root = S.find_root()
     try:
-        snap, skipped = S.snap(root, message=args.message or "", max_bytes=args.max_bytes)
+        rep: dict = {}
+        snap, skipped = S.snap(
+            root, message=args.message or "", max_bytes=args.max_bytes, report=rep
+        )
     except S.AgentckptError as e:
         _err(str(e))
         return 2
     if args.json:
-        _out_json({"snapshot": snap.to_dict(), "skipped_large": skipped})
+        _out_json({"snapshot": snap.to_dict(), "skipped_large": skipped, **rep})
     else:
         print(f"{snap.id}  {snap.timestamp}  {snap.file_count} files  {snap.message}")
         for p in skipped:
             print(f"  skipped (>{args.max_bytes} bytes): {p}", file=sys.stderr)
+        for p in rep.get("captured_ignored", []):
+            print(f"  captured (gitignored, include_ignored): {p}", file=sys.stderr)
+        for p in rep.get("refused_secrets", []):
+            print(
+                f"  refused (looks like a secret; set allow_secrets = true to capture): {p}",
+                file=sys.stderr,
+            )
     return 0
 
 
@@ -101,6 +111,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
         print(f"Restored {len(result['restored'])} file(s) from {result['snapshot']}")
         for p in result["restored"]:
             print(f"  + {p}")
+        _print_ignored_changes(result)
         if result["skipped_conflict"]:
             print(
                 f"Skipped {len(result['skipped_conflict'])} conflict(s) "
@@ -114,6 +125,29 @@ def cmd_restore(args: argparse.Namespace) -> int:
             for p in result["skipped_protected"]:
                 print(f"  x protected: {p}", file=sys.stderr)
     return 0
+
+
+def _print_ignored_changes(result: dict) -> None:
+    ch = result.get("ignored_changes")
+    if not ch:
+        return
+    n = len(ch["added"]) + len(ch["removed"]) + len(ch["changed"])
+    if not n:
+        return
+    print(
+        f"warning: {n} gitignored file(s) differ from snapshot {result['snapshot']} "
+        "and were NOT restored (agentckpt only records their metadata):",
+        file=sys.stderr,
+    )
+    for p in ch["changed"]:
+        print(f"  ~ changed: {p}", file=sys.stderr)
+    for p in ch["added"]:
+        print(f"  + added since snapshot: {p}", file=sys.stderr)
+    for p in ch["removed"]:
+        print(f"  - missing now: {p}", file=sys.stderr)
+    if ch.get("truncated"):
+        print("  (manifest was capped; some ignored files were not checked)", file=sys.stderr)
+    print("  To capture specific ignored paths, see include_ignored in agentckpt.toml.", file=sys.stderr)
 
 
 def cmd_prune(args: argparse.Namespace) -> int:

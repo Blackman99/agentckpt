@@ -16,7 +16,7 @@ Creates `.agentckpt/` (private git store) and ensures `.agentckpt/` is in `.giti
 agentckpt snap -m "before codex"
 ```
 
-Includes **untracked** files, respects `.gitignore`, skips files over 10 MiB by default, never stores `.agentckpt` itself.
+Includes **untracked** files, respects `.gitignore`, skips files over 10 MiB by default, never stores `.agentckpt` itself. Gitignored files are not stored, but their metadata is recorded so `restore` can warn when, say, `.env` changed (see [Configuration](configuration.md#gitignored-files-env-generated-config-build-output)).
 
 ## Auto-snap while the agent works
 

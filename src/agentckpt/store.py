@@ -10,6 +10,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
+from . import ignored as I
+
 STORE_DIRNAME = ".agentckpt"
 GIT_DIRNAME = "git"
 DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10 MiB
@@ -243,12 +245,29 @@ def snap(
     message: str = "",
     *,
     max_bytes: int = DEFAULT_MAX_BYTES,
+    report: Optional[dict] = None,
 ) -> Tuple[Snapshot, List[str]]:
-    """Take a snapshot. Returns (snapshot, skipped_large_paths)."""
+    """Take a snapshot. Returns (snapshot, skipped_large_paths).
+
+    If ``report`` is a dict it is filled with ``captured_ignored``, ``refused_secrets``
+    and ``ignored_manifest`` (file count, or None when disabled) — see #4.
+    """
     if not is_initialized(root):
         raise AgentckptError("Not initialized. Run `agentckpt init` first.")
     _write_info_exclude(root)
     ensure_gitignore(root)
+    cfg = I.load_config(root)
+    prev_tip = current_tip(root)
+
+    # Opt-in capture of named gitignored paths (never secrets unless allow_secrets).
+    capture, refused = I.resolve_includes(root, cfg, I.list_ignored_files_for_capture(root, _run, cfg))
+    big_captures = [p for p in capture if (root / p).stat().st_size > max_bytes]
+    capture = [p for p in capture if p not in big_captures]
+    # Stop tracking ignored files that are no longer configured for capture.
+    tracked_ign = _run(root, ["ls-files", "-z", "-c", "-i", "--exclude-standard"], check=True)
+    stale = [p for p in (tracked_ign.stdout or "").split("\0") if p and p not in set(capture)]
+    if stale:
+        _run(root, ["rm", "--cached", "-q", "--ignore-unmatch", "--", *stale], check=False)
 
     oversize = _oversize_candidates(root, max_bytes)
     add_args = ["add", "-A"]
@@ -256,12 +275,26 @@ def snap(
         # Exclude oversize paths up front so `git add` never writes their blobs (#2).
         add_args += ["--", "."] + [f":(exclude,literal){p}" for p in oversize]
     _run(root, add_args, check=True)
-    skipped = sorted(set(oversize) | set(_unstaged_large(root, max_bytes)))
+    if capture:
+        _run(root, ["add", "-f", "--", *capture], check=True)
+    skipped = sorted(set(oversize) | set(big_captures) | set(_unstaged_large(root, max_bytes)))
+
+    manifest = None
+    if cfg.ignored_manifest:
+        prev = I.read_manifest(store_path(root), prev_tip.full_id) if prev_tip else None
+        manifest = I.scan(root, _run, cfg, previous=prev, max_hash_bytes=max_bytes)
+    if report is not None:
+        report["captured_ignored"] = capture
+        report["refused_secrets"] = refused
+        report["ignored_manifest"] = len(manifest["files"]) if manifest else None
+        report["ignored_manifest_truncated"] = bool(manifest and manifest["truncated"])
 
     cached = _run(root, ["diff", "--cached", "--name-only"], check=True)
     if not (cached.stdout or "").strip():
         tip = current_tip(root)
         if tip:
+            if manifest and I.read_manifest(store_path(root), tip.full_id) is None:
+                I.write_manifest(store_path(root), tip.full_id, manifest)
             return tip, skipped
         raise AgentckptError("Nothing to snapshot (empty store).")
 
@@ -274,6 +307,8 @@ def snap(
     )
     snap_obj = current_tip(root)
     assert snap_obj is not None
+    if manifest:
+        I.write_manifest(store_path(root), snap_obj.full_id, manifest)
     return snap_obj, skipped
 
 
@@ -420,8 +455,17 @@ def restore(
             continue
         # broke from protected
 
+    ignored_changes = None
+    cfg = I.load_config(root)
+    old = I.read_manifest(store_path(root), snap_obj.full_id)
+    if old is not None and cfg.ignored_manifest:
+        now = I.scan(root, _run, cfg, previous=old)
+        # Whole tree, even with --path: the state a run leaned on (.env etc.) is global.
+        ignored_changes = I.compare(old, now, exclude=set(files))
+
     return {
         "snapshot": snap_obj.id,
+        "ignored_changes": ignored_changes,
         "restored": restored,
         "skipped_conflict": skipped_conflict,
         "skipped_protected": skipped_protected,
@@ -450,6 +494,7 @@ def prune(root: Path, keep: int = DEFAULT_KEEP) -> List[str]:
     _run(root, ["reset", "-q"], check=False)
     _run(root, ["commit", "--allow-empty", "-m", "agentckpt: init", "--quiet"], check=True)
 
+    id_map = {}
     for s in kept:
         _run(root, ["read-tree", s.full_id], check=True)
         env = {
@@ -471,8 +516,20 @@ def prune(root: Path, keep: int = DEFAULT_KEEP) -> List[str]:
             check=True,
             env_extra=env,
         )
+        id_map[s.full_id] = _run(root, ["rev-parse", "HEAD"], check=True).stdout.strip()
 
     tip = _run(root, ["rev-parse", "HEAD"], check=True).stdout.strip()
+    # Carry ignored-file manifests over to the rewritten commit ids; drop the rest.
+    mdir = I.manifest_dir(store_path(root))
+    if mdir.is_dir():
+        for old_id, new_id in id_map.items():
+            m = I.read_manifest(store_path(root), old_id)
+            if m is not None:
+                I.write_manifest(store_path(root), new_id, m)
+        keep_names = {f"{v}.json" for v in id_map.values()}
+        for f in mdir.iterdir():
+            if f.name not in keep_names:
+                f.unlink()
     # Prefer existing default branch name (orphan checkout left HEAD on prune-tmp)
     default = "main"
     for name in ("main", "master"):
