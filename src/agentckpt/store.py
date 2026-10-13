@@ -17,6 +17,10 @@ GIT_DIRNAME = "git"
 DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10 MiB
 DEFAULT_KEEP = 50
 EXCLUDE_ALWAYS = [".agentckpt/", ".agentckpt", ".git/"]
+# $GIT_DIR/info/attributes outranks the user's .gitattributes and core.autocrlf.
+# Snapshots must hold the exact bytes on disk: no CRLF/LF conversion (Windows
+# autocrlf, `eol=crlf`), no clean filters (git-lfs would store pointers), no $Id$.
+SHADOW_ATTRIBUTES = "* -text -filter -ident -working-tree-encoding\n"
 HOOK_LOCK_NAME = "hook.lock"  # transient; held by `agentckpt hook` while it snaps
 HOOK_LOCK_STALE_S = 120.0
 
@@ -147,6 +151,15 @@ def _write_info_exclude(root: Path) -> None:
     info = git_dir(root) / "info"
     info.mkdir(parents=True, exist_ok=True)
     (info / "exclude").write_text("\n".join(EXCLUDE_ALWAYS) + "\n", encoding="utf-8")
+    (info / "attributes").write_text(SHADOW_ATTRIBUTES, encoding="utf-8")
+
+
+def _norm_path_arg(path: str) -> str:
+    """`./sub/`, `/sub` -> `sub`. Unlike str.lstrip("./"), keeps `.github` intact."""
+    p = path.replace("\\", "/") if os.sep == "\\" else path
+    while p.startswith("./") or p.startswith("/"):
+        p = p[1:] if p.startswith("/") else p[2:]
+    return p.rstrip("/")
 
 
 def init_store(root: Path) -> Tuple[Path, bool]:
@@ -376,8 +389,8 @@ def _files_in_tree(root: Path, full_id: str, path: Optional[str] = None) -> List
     out = _run(root, args, check=True)
     files = [ln for ln in (out.stdout or "").splitlines() if ln.strip()]
     if path:
-        path = path.lstrip("./")
-        files = [f for f in files if f == path or f.startswith(path.rstrip("/") + "/")]
+        path = _norm_path_arg(path)
+        files = [f for f in files if f == path or f.startswith(path + "/")]
     return files
 
 
@@ -411,7 +424,7 @@ def _tree_entries(root: Path, full_id: str, path: Optional[str] = None) -> List[
             continue  # submodule commits etc.
         entries.append((mode, sha, rel))
     if path:
-        p = path.lstrip("./").rstrip("/")
+        p = _norm_path_arg(path)
         entries = [e for e in entries if e[2] == p or e[2].startswith(p + "/")]
     return entries
 
