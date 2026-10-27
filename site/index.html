@@ -54,7 +54,7 @@
       <li class="cell" data-i="6"><span class="well"><span class="pill"><i></i><i></i></span></span><span class="lid"><b>S</b><small>SUN</small></span></li>
     </ol>
     <div class="spine">
-      <p class="rx">Rx · undo for coding agents · v0.2.0 · MIT</p>
+      <p class="rx">Rx · undo for coding agents · v0.3.0 · MIT</p>
       <h1 id="h1">Remember to give your agent its meds.</h1>
       <p class="dose">Take <b>1 snapshot</b> before every agent turn. When it acts up, one pill puts the files back. <span class="nowrap">No interactions with git.</span></p>
     </div>
@@ -166,10 +166,10 @@ Restored 3 file(s) from b66469f</code></pre><p>Bytes go straight back into the t
     <p>Adults and agents of all ages: Python 3.9+, git on PATH. Not on PyPI yet.</p>
     <ol class="rx-list">
       <li><span class="when">Try it</span><code id="t1">uvx --from git+https://github.com/Blackman99/agentckpt agentckpt demo</code><button class="disp" data-copy="#t1" aria-label="Copy the uvx command">Dispense</button></li>
-      <li><span class="when">Install</span><code id="t2">pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.2.0/agentckpt-0.2.0-py3-none-any.whl</code><button class="disp" data-copy="#t2" aria-label="Copy the pipx command">Dispense</button></li>
+      <li><span class="when">Install</span><code id="t2">pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.3.0/agentckpt-0.3.0-py3-none-any.whl</code><button class="disp" data-copy="#t2" aria-label="Copy the pipx command">Dispense</button></li>
       <li><span class="when">Take</span><code id="t3">agentckpt init &amp;&amp; agentckpt snap -m "before agent"</code><button class="disp" data-copy="#t3" aria-label="Copy the usage command">Dispense</button></li>
     </ol>
-    <p class="small">The wheel comes from <a href="https://github.com/Blackman99/agentckpt/releases/tag/v0.2.0">GitHub Releases v0.2.0</a>.</p>
+    <p class="small">The wheel comes from <a href="https://github.com/Blackman99/agentckpt/releases/tag/v0.3.0">GitHub Releases v0.3.0</a>.</p>
   </div>
 
   <div class="fact" id="refill">
@@ -198,10 +198,10 @@ agentckpt run -- aider            # anything else</code></pre>
   </div>
 
   <div class="fact" id="warnings">
-    <h3>Warnings <small>side effects in v0.2.0</small></h3>
+    <h3>Warnings <small>side effects in v0.3.0</small></h3>
     <ul class="dots">
       <li><b>Restore doesn't delete.</b> Files the agent created after the snap stay. Use <code>agentckpt diff &lt;id&gt;</code> to see them.</li>
-      <li><b>Only what it saw.</b> Gitignored files and files over 10&nbsp;MiB (<code>--max-bytes</code>) aren't stored.</li>
+      <li><b>Only what it saw.</b> Gitignored files (unless listed in <code>include_ignored</code>), paths in <code>.agentckptignore</code> and files over 10&nbsp;MiB (<code>--max-bytes</code>) aren't stored; <code>restore</code> warns when gitignored files changed.</li>
       <li><b>Hooks or polling.</b> <code>watch</code> polls and can catch a half-written state; use the <a href="https://blackman99.github.io/agentckpt/docs/hooks/">agent hooks</a> (Codex, Claude Code, Gemini CLI, OpenCode) for clean per-turn snapshots.</li>
       <li><b>An undo buffer, not a backup.</b> The store lives in the project, so <code>git clean -fdx</code> removes it.</li>
     </ul>

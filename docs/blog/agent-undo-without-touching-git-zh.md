@@ -43,12 +43,12 @@ git --git-dir=.agentckpt/git --work-tree=<项目根目录> ...
 
 ## 安装
 
-agentckpt **目前还没有发布到 PyPI**。v0.2.0 的 wheel 和 sdist 放在 [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.2.0) 上，可以直接装 wheel：
+agentckpt **目前还没有发布到 PyPI**。v0.3.0 的 wheel 和 sdist 放在 [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.3.0) 上，可以直接装 wheel：
 
 ```bash
-pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.2.0/agentckpt-0.2.0-py3-none-any.whl
+pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.3.0/agentckpt-0.3.0-py3-none-any.whl
 # 或者：pip install <同一个链接>
-agentckpt --version   # agentckpt 0.2.0
+agentckpt --version   # agentckpt 0.3.0
 ```
 
 不想装的话，也可以直接从仓库跑：
@@ -96,7 +96,7 @@ Restored 3 file(s) from b66469f
 
 跑得比较久的任务，可以在另一个终端开着 `agentckpt watch`（`--debounce` 默认 800 毫秒轮询一次）。快照多了用 `agentckpt prune --keep 50` 清一清。
 
-## 目前的局限（v0.2.0）
+## 目前的局限（v0.3.0）
 
 有些事它现在不做，先说清楚：
 

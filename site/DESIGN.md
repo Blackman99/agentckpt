@@ -18,7 +18,7 @@ an over-the-counter box. Both are moulded plastic and pharmacy objects, not prin
 | **Interactions: none with git** | your `.git` HEAD, index and branches are never touched |
 | Directions / Dosage | install and usage |
 | Active ingredients | the commands |
-| Side effects & warnings | known limits in v0.2.0 |
+| Side effects & warnings | known limits in v0.3.0 |
 | Auto-refill | `agentckpt hook` for Codex, Claude Code, Gemini CLI, OpenCode; `agentckpt run` |
 
 The jokes stay literal and short: *"Take 1 snapshot before every agent turn."*, *"Do not operate heavy refactors
