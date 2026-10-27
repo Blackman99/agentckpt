@@ -17,6 +17,7 @@ GIT_DIRNAME = "git"
 DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10 MiB
 DEFAULT_KEEP = 50
 EXCLUDE_ALWAYS = [".agentckpt/", ".agentckpt", ".git/"]
+IGNORE_FILENAME = I.IGNORE_FILENAME  # .agentckptignore: gitignore syntax, snapshot-only
 # $GIT_DIR/info/attributes outranks the user's .gitattributes and core.autocrlf.
 # Snapshots must hold the exact bytes on disk: no CRLF/LF conversion (Windows
 # autocrlf, `eol=crlf`), no clean filters (git-lfs would store pointers), no $Id$.
@@ -150,8 +151,31 @@ def ensure_gitignore(root: Path) -> bool:
 def _write_info_exclude(root: Path) -> None:
     info = git_dir(root) / "info"
     info.mkdir(parents=True, exist_ok=True)
-    (info / "exclude").write_text("\n".join(EXCLUDE_ALWAYS) + "\n", encoding="utf-8")
+    text = "\n".join(EXCLUDE_ALWAYS) + "\n"
+    patterns = read_ignore_patterns(root)
+    if patterns:
+        # info/exclude is anchored at the work tree root and ranks below .gitignore,
+        # so .agentckptignore can only add exclusions, never un-ignore a gitignored path.
+        text += f"# from {IGNORE_FILENAME}\n" + "\n".join(patterns) + "\n"
+        # Last match wins: repeat the hard excludes so `!.agentckpt/` can't re-include them.
+        text += "# always\n" + "\n".join(EXCLUDE_ALWAYS) + "\n"
+    (info / "exclude").write_text(text, encoding="utf-8")
     (info / "attributes").write_text(SHADOW_ATTRIBUTES, encoding="utf-8")
+
+
+def read_ignore_patterns(root: Path) -> List[str]:
+    """Non-empty, non-comment lines of .agentckptignore (gitignore syntax)."""
+    f = root / IGNORE_FILENAME
+    try:
+        raw = f.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError):
+        return []
+    out = []
+    for ln in raw.splitlines():
+        ln = ln.rstrip("\r")
+        if ln.strip() and not ln.lstrip().startswith("#"):
+            out.append(ln)
+    return out
 
 
 def _norm_path_arg(path: str) -> str:
@@ -694,8 +718,13 @@ def doctor(root: Path) -> dict:
         "git_on_path": bool(shutil.which("git")),
         "gitignore_ok": False,
         "snap_count": 0,
+        "ignore_file": None,
+        "ignore_patterns": 0,
         "issues": [],
     }
+    if (root / IGNORE_FILENAME).is_file():
+        report["ignore_file"] = str(root / IGNORE_FILENAME)
+        report["ignore_patterns"] = len(read_ignore_patterns(root))
     if not report["git_on_path"]:
         report["issues"].append("git not found on PATH")
     gi = root / ".gitignore"
