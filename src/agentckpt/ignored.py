@@ -165,6 +165,27 @@ def is_secret_path(rel: str) -> bool:
 
 # ---------------------------------------------------------------- listing
 
+IGNORE_FILENAME = ".agentckptignore"
+
+
+def agentckpt_ignored(root: Path, run) -> Tuple[set, Tuple[str, ...]]:
+    """Paths matched by .agentckptignore alone: (files, dir prefixes ending in '/').
+
+    These are excluded from snapshots on purpose, so they are not "gitignored state"
+    and stay out of the manifest and restore warnings.
+    """
+    f = root / IGNORE_FILENAME
+    if not f.is_file():
+        return set(), ()
+    out = run(
+        root,
+        ["ls-files", "-z", "-o", "-i", "--directory", f"--exclude-from={f}"],
+        check=False,
+    )
+    ents = [p for p in (getattr(out, "stdout", "") or "").split("\0") if p and not _is_internal(p)]
+    return {p for p in ents if not p.endswith("/")}, tuple(p for p in ents if p.endswith("/"))
+
+
 def _is_internal(rel: str) -> bool:
     first = rel.replace("\\", "/").split("/", 1)[0]
     return first in (".git", ".agentckpt")
@@ -218,8 +239,11 @@ def scan(root: Path, run, cfg: Config, previous: Optional[dict] = None, max_hash
     files, truncated = _walk_files(
         root, ignored_entries(root, run), cfg.manifest_skip_dirs, max(cfg.manifest_max_files, 0) or 1
     ) if cfg.manifest_max_files else ([], False)
+    own_files, own_dirs = agentckpt_ignored(root, run)
     rec: Dict[str, dict] = {}
     for rel in files:
+        if rel in own_files or (own_dirs and rel.startswith(own_dirs)):
+            continue
         p = root / rel
         try:
             st = p.lstat()

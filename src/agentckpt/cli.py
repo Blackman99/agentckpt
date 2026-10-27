@@ -185,6 +185,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print(f"  git on PATH: {report['git_on_path']}")
         print(f"  gitignore:   {'ok' if report['gitignore_ok'] else 'MISSING .agentckpt/'}")
         print(f"  snapshots:   {report['snap_count']}")
+        if report.get("ignore_file"):
+            print(f"  ignorefile:  .agentckptignore ({report['ignore_patterns']} pattern(s))")
         for issue in report["issues"]:
             print(f"  ! {issue}")
     return 0 if report["ok"] else 1

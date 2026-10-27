@@ -1,6 +1,6 @@
 # Configuration
 
-agentckpt is intentionally config-light. The only config file is the optional `agentckpt.toml` (or `[tool.agentckpt]` in `pyproject.toml`), and it controls only the [gitignored-file](#gitignored-files-env-generated-config-build-output) behaviour.
+agentckpt is intentionally config-light. Besides an optional [`.agentckptignore`](#agentckptignore), the only config file is the optional `agentckpt.toml` (or `[tool.agentckpt]` in `pyproject.toml`), and it controls only the [gitignored-file](#gitignored-files-env-generated-config-build-output) behaviour.
 
 ## Store location
 
@@ -12,8 +12,31 @@ Always `<project-root>/.agentckpt/`.
 ## Ignore rules
 
 1. Your project's `.gitignore` (and nested ones) — respected via shadow `git add`.
-2. Always excluded: `.agentckpt/`, `.git/`.
-3. Large files: `--max-bytes` on `snap` (default `10485760` = 10 MiB). Skipped paths are printed to stderr.
+2. `.agentckptignore` at the project root (optional, see below).
+3. Always excluded: `.agentckpt/`, `.git/`.
+4. Large files: `--max-bytes` on `snap` (default `10485760` = 10 MiB). Skipped paths are printed to stderr.
+
+### `.agentckptignore`
+
+Some files belong in your git repo but not in agent snapshots: a committed `dist/` bundle, fixture
+dumps, a big lockfile cache, or logs a test run rewrites every turn. List them in `.agentckptignore`
+at the project root. It uses `.gitignore` syntax (globs, `dir/`, `!negation`, `#` comments):
+
+```gitignore
+# .agentckptignore
+dist/
+logs/*.log
+!logs/keep.log
+fixtures/*.sql
+```
+
+- It only affects snapshots. Your own `git status` and `.gitignore` are untouched.
+- `snap`, `watch` and agent hooks all pick it up on the next run. Adding a pattern drops those paths
+  from the *next* snapshot; older snapshots still hold them and can restore them.
+- `restore` never deletes excluded files, and they don't show up in the gitignored-file warnings.
+- It can only exclude more. A `!` line can't bring back something `.gitignore` ignores (use
+  [`include_ignored`](#opting-in-to-capture) for that), and it can never include `.agentckpt/` or `.git/`.
+- `agentckpt doctor` shows how many patterns it found.
 
 ## Gitignored files (`.env`, generated config, build output)
 

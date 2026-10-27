@@ -16,7 +16,7 @@
 ## v0.3 — Selective restore & quotas
 
 - Interactive / path-filtered restore UX
-- Ignore overrides (`.agentckptignore`)
+- Ignore overrides (`.agentckptignore`) ✅ on `main`
 - Compression and store quota
 
 ## v0.4 — MCP server
