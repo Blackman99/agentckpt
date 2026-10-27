@@ -43,12 +43,12 @@ The package is pure Python 3.9+ with zero runtime dependencies; the only require
 
 ## Install
 
-agentckpt **is not on PyPI yet**. v0.2.0 is published on [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.2.0) as a wheel and sdist. Install the wheel directly:
+agentckpt **is not on PyPI yet**. v0.3.0 is published on [GitHub Releases](https://github.com/Blackman99/agentckpt/releases/tag/v0.3.0) as a wheel and sdist. Install the wheel directly:
 
 ```bash
-pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.2.0/agentckpt-0.2.0-py3-none-any.whl
+pipx install https://github.com/Blackman99/agentckpt/releases/download/v0.3.0/agentckpt-0.3.0-py3-none-any.whl
 # or: pip install <same URL>
-agentckpt --version   # agentckpt 0.2.0
+agentckpt --version   # agentckpt 0.3.0
 ```
 
 Or try it without installing, straight from the repo:
@@ -96,7 +96,7 @@ The deleted untracked file comes back, and `git log` in the real repo is unchang
 
 For longer sessions, leave `agentckpt watch` running in another terminal (`--debounce 800` is the default poll interval in ms). Keep the store small with `agentckpt prune --keep 50`.
 
-## Limits (v0.2.0)
+## Limits (v0.3.0)
 
 Being honest about what it does *not* do:
 

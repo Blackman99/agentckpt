@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentckpt"
-version = "0.2.0"
+version = "0.3.0"
 description = "Checkpoint a working tree while coding agents run, and restore any snapshot without touching your git branches or index."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -13,10 +13,15 @@
 - Pre-turn / post-turn / pre-edit auto-snap via `UserPromptSubmit`, `PreToolUse`, `Stop` (and Gemini equivalents); `agentckpt run -- <agent>` wrapper for agents without hooks
 - Drop-in configs in `examples/` for Codex, Claude Code, Gemini CLI, an OpenCode plugin, and shell wrappers
 
-## v0.3 — Selective restore & quotas
+## v0.3.0 — Safer snapshots ✅
+
+- Ignore overrides (`.agentckptignore`)
+- Gitignored-file manifest + restore warnings; opt-in `include_ignored` / `allow_secrets`
+- Oversize files never written to the store; exact-bytes snapshots (no autocrlf/eol/lfs); symlink-safe, all-or-nothing restore
+
+## v0.3.x / next — Selective restore & quotas
 
 - Interactive / path-filtered restore UX
-- Ignore overrides (`.agentckptignore`) ✅ on `main`
 - Compression and store quota
 
 ## v0.4 — MCP server

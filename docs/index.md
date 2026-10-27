@@ -19,7 +19,7 @@ agentckpt restore <id> --force
 
 **What about `.gitignore` and big build dirs?** `.gitignore` is respected, so `build/`, `node_modules/`, `.venv/` and similar are never stored. To capture a specific ignored path, list it in `include_ignored`. To keep committed files out of snapshots (a checked-in `dist/`, fixture dumps), list them in `.agentckptignore`, which uses `.gitignore` syntax and only affects snapshots (on `main`, ships in the next release).
 
-**Ignored `.env` or generated config?** Contents are not stored by default. Each snap records metadata only (path, size, mtime, hash), and `restore` warns if these files changed or went missing. Opt in with `include_ignored`; secret-looking files also need `allow_secrets = true` and are stored unencrypted. *This is on `main` and ships in the next release, not in v0.2.0* ([#4](https://github.com/Blackman99/agentckpt/issues/4)). Details: [configuration](configuration.md).
+**Ignored `.env` or generated config?** Contents are not stored by default. Each snap records metadata only (path, size, mtime, hash), and `restore` warns if these files changed or went missing. Opt in with `include_ignored`; secret-looking files also need `allow_secrets = true` and are stored unencrypted. *Released in v0.3.0* ([#4](https://github.com/Blackman99/agentckpt/issues/4)). Details: [configuration](configuration.md).
 
 ## Next
 
